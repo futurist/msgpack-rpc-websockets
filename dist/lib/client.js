@@ -391,56 +391,123 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
 
         _this4.current_reconnects = 0;
       });
-      this.socket.addEventListener("message", function (_ref2) {
-        var message = _ref2.data;
+      this.socket.addEventListener("message", /*#__PURE__*/function () {
+        var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(_ref2) {
+          var message, args, i, result;
+          return _regenerator["default"].wrap(function _callee5$(_context5) {
+            while (1) {
+              switch (_context5.prev = _context5.next) {
+                case 0:
+                  message = _ref2.data;
 
-        // if (message instanceof ArrayBuffer)
-        //     message = Buffer.from(message).toString()
-        try {
-          message = _tinyMsgpack["default"].decode(message);
-        } catch (error) {
-          return;
-        } // check if any listeners are attached and forward event
+                  if (!(typeof Blob !== "undefined" && message instanceof Blob)) {
+                    _context5.next = 7;
+                    break;
+                  }
 
+                  _context5.t0 = Uint8Array;
+                  _context5.next = 5;
+                  return message.arrayBuffer();
 
-        if (message.notification && _this4.listeners(message.notification).length) {
-          if (!Object.keys(message.params).length) return _this4.emit(message.notification);
-          var args = [message.notification];
-          if (message.params.constructor === Object) args.push(message.params);else // using for-loop instead of unshift/spread because performance is better
-            for (var i = 0; i < message.params.length; i++) {
-              args.push(message.params[i]);
-            } // run as microtask so that pending queue messages are resolved first
-          // eslint-disable-next-line prefer-spread
+                case 5:
+                  _context5.t1 = _context5.sent;
+                  message = new _context5.t0(_context5.t1);
 
-          return Promise.resolve().then(function () {
-            _this4.emit.apply(_this4, args);
-          });
-        }
+                case 7:
+                  _context5.prev = 7;
+                  message = _tinyMsgpack["default"].decode(message);
+                  _context5.next = 15;
+                  break;
 
-        if (!_this4.queue[message.id]) {
-          // general MessagePack events
-          if (message.method && message.params) {
-            // run as microtask so that pending queue messages are resolved first
-            return Promise.resolve().then(function () {
-              _this4.emit(message.method, message.params);
-            });
-          }
+                case 11:
+                  _context5.prev = 11;
+                  _context5.t2 = _context5["catch"](7);
+                  console.log("decode error:", _context5.t2);
+                  return _context5.abrupt("return");
 
-          return;
-        } // reject early since server's response is invalid
+                case 15:
+                  if (!(message.notification && _this4.listeners(message.notification).length)) {
+                    _context5.next = 21;
+                    break;
+                  }
 
+                  if (Object.keys(message.params).length) {
+                    _context5.next = 18;
+                    break;
+                  }
 
-        if ("error" in message === "result" in message) _this4.queue[message.id].promise[1](new Error("Server response malformed. Response must include either \"result\"" + " or \"error\", but not both."));
-        if (_this4.queue[message.id].timeout) clearTimeout(_this4.queue[message.id].timeout);
-        if (message.error) _this4.queue[message.id].promise[1](message.error);else _this4.queue[message.id].promise[0](message.result);
-        _this4.queue[message.id] = null;
-      });
+                  return _context5.abrupt("return", _this4.emit(message.notification));
+
+                case 18:
+                  args = [message.notification];
+                  if (message.params.constructor === Object) args.push(message.params);else // using for-loop instead of unshift/spread because performance is better
+                    for (i = 0; i < message.params.length; i++) {
+                      args.push(message.params[i]);
+                    } // run as microtask so that pending queue messages are resolved first
+                  // eslint-disable-next-line prefer-spread
+
+                  return _context5.abrupt("return", Promise.resolve().then(function () {
+                    _this4.emit.apply(_this4, args);
+                  }));
+
+                case 21:
+                  if (_this4.queue[message.id]) {
+                    _context5.next = 25;
+                    break;
+                  }
+
+                  if (!(message.method && message.params)) {
+                    _context5.next = 24;
+                    break;
+                  }
+
+                  return _context5.abrupt("return", Promise.resolve().then(function () {
+                    _this4.emit(message.method, message.params);
+                  }));
+
+                case 24:
+                  return _context5.abrupt("return");
+
+                case 25:
+                  // reject early since server's response is invalid
+                  if ("error" in message === "result" in message) _this4.queue[message.id].promise[1](new Error("Server response malformed. Response must include either \"result\"" + " or \"error\", but not both."));
+                  if (_this4.queue[message.id].timeout) clearTimeout(_this4.queue[message.id].timeout);
+
+                  if (message.error) {
+                    message.error.__request_id = message.id;
+
+                    _this4.queue[message.id].promise[1](message.error);
+                  } else {
+                    result = message.result;
+
+                    if (result) {
+                      result = Object(result);
+                      result.__request_id = message.id;
+                    }
+
+                    _this4.queue[message.id].promise[0](result);
+                  }
+
+                  _this4.queue[message.id] = null;
+
+                case 29:
+                case "end":
+                  return _context5.stop();
+              }
+            }
+          }, _callee5, null, [[7, 11]]);
+        }));
+
+        return function (_x4) {
+          return _ref3.apply(this, arguments);
+        };
+      }());
       this.socket.addEventListener("error", function (error) {
         return _this4.emit("error", error);
       });
-      this.socket.addEventListener("close", function (_ref3) {
-        var code = _ref3.code,
-            reason = _ref3.reason;
+      this.socket.addEventListener("close", function (_ref4) {
+        var code = _ref4.code,
+            reason = _ref4.reason;
         if (_this4.ready) // Delay close event until internal state is updated
           setTimeout(function () {
             return _this4.emit("close", code, reason);

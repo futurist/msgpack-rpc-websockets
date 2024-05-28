@@ -186,13 +186,17 @@ export default class CommonClient extends EventEmitter {
             this.emit("open");
             this.current_reconnects = 0;
         });
-        this.socket.addEventListener("message", ({ data: message }) => {
+        this.socket.addEventListener("message", async ({ data: message }) => {
             // if (message instanceof ArrayBuffer)
             //     message = Buffer.from(message).toString()
+            if (typeof Blob !== "undefined" && message instanceof Blob) {
+                message = new Uint8Array(await message.arrayBuffer());
+            }
             try {
                 message = msgpack.decode(message);
             }
             catch (error) {
+                console.log("decode error:", error);
                 return;
             }
             // check if any listeners are attached and forward event
@@ -226,10 +230,18 @@ export default class CommonClient extends EventEmitter {
                     " or \"error\", but not both."));
             if (this.queue[message.id].timeout)
                 clearTimeout(this.queue[message.id].timeout);
-            if (message.error)
+            if (message.error) {
+                message.error.__request_id = message.id;
                 this.queue[message.id].promise[1](message.error);
-            else
-                this.queue[message.id].promise[0](message.result);
+            }
+            else {
+                let result = message.result;
+                if (result) {
+                    result = Object(result);
+                    result.__request_id = message.id;
+                }
+                this.queue[message.id].promise[0](result);
+            }
             this.queue[message.id] = null;
         });
         this.socket.addEventListener("error", (error) => this.emit("error", error));

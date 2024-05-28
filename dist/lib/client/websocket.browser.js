@@ -44,7 +44,7 @@ var WebSocketBrowserImpl = /*#__PURE__*/function (_EventEmitter) {
 
     (0, _classCallCheck2["default"])(this, WebSocketBrowserImpl);
     _this = _super.call(this);
-    _this.socket = new window.WebSocket(address, protocols);
+    _this.socket = new WebSocket(address, protocols);
 
     _this.socket.onopen = function () {
       return _this.emit("open");

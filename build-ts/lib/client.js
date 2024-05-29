@@ -231,14 +231,17 @@ export default class CommonClient extends EventEmitter {
             if (this.queue[message.id].timeout)
                 clearTimeout(this.queue[message.id].timeout);
             if (message.error) {
-                message.error.__request_id = message.id;
+                Object.defineProperty(message.error, '__request_id', {
+                    value: message.id,
+                });
                 this.queue[message.id].promise[1](message.error);
             }
             else {
                 let result = message.result;
                 if (result) {
-                    result = Object(result);
-                    result.__request_id = message.id;
+                    result = Object.defineProperty(Object(result), '__request_id', {
+                        value: message.id,
+                    });
                 }
                 this.queue[message.id].promise[0](result);
             }

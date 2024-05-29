@@ -533,15 +533,18 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
                   if (_this4.queue[message.id].timeout) clearTimeout(_this4.queue[message.id].timeout);
 
                   if (message.error) {
-                    message.error.__request_id = message.id;
+                    Object.defineProperty(message.error, '__request_id', {
+                      value: message.id
+                    });
 
                     _this4.queue[message.id].promise[1](message.error);
                   } else {
                     result = message.result;
 
                     if (result) {
-                      result = Object(result);
-                      result.__request_id = message.id;
+                      result = Object.defineProperty(Object(result), '__request_id', {
+                        value: message.id
+                      });
                     }
 
                     _this4.queue[message.id].promise[0](result);

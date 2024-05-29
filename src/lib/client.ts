@@ -202,7 +202,7 @@ export default class CommonClient extends EventEmitter
      */
     notify(method: string, params?: IWSRequestParams)
     {
-        return new Promise((resolve, reject) =>
+        return new Promise<void>((resolve, reject) =>
         {
             if (!this.ready)
                 return reject(new Error("socket not ready"))

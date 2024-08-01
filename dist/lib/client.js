@@ -474,7 +474,7 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
                   if (_this4.queue[message.id].timeout) clearTimeout(_this4.queue[message.id].timeout);
 
                   if (message.error) {
-                    Object.defineProperty(message.error, '__request_id', {
+                    Object.defineProperty(message.error, "__request_id", {
                       value: message.id
                     });
 
@@ -483,7 +483,7 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
                     result = message.result;
 
                     if (result) {
-                      result = Object.defineProperty(Object(result), '__request_id', {
+                      result = Object.defineProperty(Object(result), "__request_id", {
                         value: message.id
                       });
                     }

@@ -450,7 +450,7 @@ export default class Server extends EventEmitter
             {
                 this.wss.close()
                 this.emit("close")
-                resolve()
+                resolve(undefined)
             }
 
             catch (error) { reject(error) }

@@ -118,5 +118,5 @@ var WebSocketBrowserImpl = /*#__PURE__*/function (_EventEmitter) {
 
 
 function _default(address, options) {
-  return new WebSocketBrowserImpl(address, options);
+  return new WebSocketBrowserImpl(address, options, options.protocol);
 }

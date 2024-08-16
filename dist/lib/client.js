@@ -54,21 +54,20 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
     var _this;
 
     var address = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "ws://localhost:8080";
-
-    var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-        _ref$autoconnect = _ref.autoconnect,
-        autoconnect = _ref$autoconnect === void 0 ? true : _ref$autoconnect,
-        _ref$reconnect = _ref.reconnect,
-        reconnect = _ref$reconnect === void 0 ? true : _ref$reconnect,
-        _ref$reconnect_interv = _ref.reconnect_interval,
-        reconnect_interval = _ref$reconnect_interv === void 0 ? 1000 : _ref$reconnect_interv,
-        _ref$max_reconnects = _ref.max_reconnects,
-        max_reconnects = _ref$max_reconnects === void 0 ? 5 : _ref$max_reconnects;
-
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     var generate_request_id = arguments.length > 3 ? arguments[3] : undefined;
     (0, _classCallCheck2["default"])(this, CommonClient);
     _this = _super.call(this);
     _this.webSocketFactory = webSocketFactory;
+    _this.options = options;
+    var _options$autoconnect = options.autoconnect,
+        autoconnect = _options$autoconnect === void 0 ? true : _options$autoconnect,
+        _options$reconnect = options.reconnect,
+        reconnect = _options$reconnect === void 0 ? true : _options$reconnect,
+        _options$reconnect_in = options.reconnect_interval,
+        reconnect_interval = _options$reconnect_in === void 0 ? 1000 : _options$reconnect_in,
+        _options$max_reconnec = options.max_reconnects,
+        max_reconnects = _options$max_reconnec === void 0 ? 5 : _options$max_reconnec;
     _this.queue = {};
     _this.rpc_id = 0;
     _this.address = address;
@@ -83,12 +82,12 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
       return ++_this.rpc_id;
     };
 
-    if (_this.autoconnect) _this._connect(_this.address, {
+    if (_this.autoconnect) _this._connect(_this.address, Object.assign(Object.assign({}, _this.options), {
       autoconnect: _this.autoconnect,
       reconnect: _this.reconnect,
       reconnect_interval: _this.reconnect_interval,
       max_reconnects: _this.max_reconnects
-    });
+    }));
     return _this;
   }
   /**
@@ -392,13 +391,13 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
         _this4.current_reconnects = 0;
       });
       this.socket.addEventListener("message", /*#__PURE__*/function () {
-        var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(_ref2) {
+        var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(_ref) {
           var message, args, i, result;
           return _regenerator["default"].wrap(function _callee5$(_context5) {
             while (1) {
               switch (_context5.prev = _context5.next) {
                 case 0:
-                  message = _ref2.data;
+                  message = _ref.data;
 
                   if (!(typeof Blob !== "undefined" && message instanceof Blob)) {
                     _context5.next = 7;
@@ -502,15 +501,15 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
         }));
 
         return function (_x4) {
-          return _ref3.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         };
       }());
       this.socket.addEventListener("error", function (error) {
         return _this4.emit("error", error);
       });
-      this.socket.addEventListener("close", function (_ref4) {
-        var code = _ref4.code,
-            reason = _ref4.reason;
+      this.socket.addEventListener("close", function (_ref3) {
+        var code = _ref3.code,
+            reason = _ref3.reason;
         if (_this4.ready) // Delay close event until internal state is updated
           setTimeout(function () {
             return _this4.emit("close", code, reason);

@@ -63,5 +63,5 @@ class WebSocketBrowserImpl extends EventEmitter {
  * @return {Undefined}
  */
 export default function (address, options) {
-    return new WebSocketBrowserImpl(address, options);
+    return new WebSocketBrowserImpl(address, options, options.protocol);
 }

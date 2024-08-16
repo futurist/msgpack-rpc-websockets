@@ -70,13 +70,13 @@ export default class CommonClient extends EventEmitter
         super()
 
         this.webSocketFactory = webSocketFactory
-        this.options = options;
+        this.options = options
         const {
             autoconnect = true,
             reconnect = true,
             reconnect_interval = 1000,
             max_reconnects = 5
-        } = options;
+        } = options
 
         this.queue = {}
         this.rpc_id = 0

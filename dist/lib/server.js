@@ -469,7 +469,7 @@ var Server = /*#__PURE__*/function (_EventEmitter) {
 
           _this4.emit("close");
 
-          resolve();
+          resolve(undefined);
         } catch (error) {
           reject(error);
         }

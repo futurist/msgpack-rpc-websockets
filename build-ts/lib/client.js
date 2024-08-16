@@ -6,7 +6,8 @@
 "use strict";
 // @ts-ignore
 import { EventEmitter } from "eventemitter3";
-import msgpack from "tiny-msgpack";
+// import msgpack from "tiny-msgpack"
+import * as msgpack from "@msgpack/msgpack";
 export default class CommonClient extends EventEmitter {
     /**
      * Instantiate a Client class.
@@ -186,11 +187,16 @@ export default class CommonClient extends EventEmitter {
         this.socket.addEventListener("message", async ({ data: message }) => {
             // if (message instanceof ArrayBuffer)
             //     message = Buffer.from(message).toString()
-            if (typeof Blob !== "undefined" && message instanceof Blob) {
-                message = new Uint8Array(await message.arrayBuffer());
-            }
             try {
-                message = msgpack.decode(message);
+                if (typeof Blob !== "undefined" && message instanceof Blob) {
+                    // message = new Uint8Array(await message.arrayBuffer())
+                    message = message.stream
+                        ? await msgpack.decodeAsync(message.stream())
+                        : msgpack.decode(await message.arrayBuffer());
+                }
+                else {
+                    message = msgpack.decode(message);
+                }
             }
             catch (error) {
                 console.log("decode error:", error);

@@ -5,6 +5,8 @@
  */
 "use strict"; // @ts-ignore
 
+var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
+
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 
 Object.defineProperty(exports, "__esModule", {
@@ -30,7 +32,7 @@ var _getPrototypeOf2 = _interopRequireDefault(require("@babel/runtime/helpers/ge
 
 var _eventemitter = require("eventemitter3");
 
-var _tinyMsgpack = _interopRequireDefault(require("tiny-msgpack"));
+var msgpack = _interopRequireWildcard(require("@msgpack/msgpack"));
 
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
@@ -140,7 +142,7 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
           id: rpc_id
         };
 
-        _this2.socket.send(_tinyMsgpack["default"].encode(message), ws_opts, function (error) {
+        _this2.socket.send(msgpack.encode(message), ws_opts, function (error) {
           if (error) return reject(error);
           _this2.queue[rpc_id] = {
             promise: [resolve, reject]
@@ -253,7 +255,7 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
           params: params || null
         };
 
-        _this3.socket.send(_tinyMsgpack["default"].encode(message), function (error) {
+        _this3.socket.send(msgpack.encode(message), function (error) {
           if (error) return reject(error);
           resolve();
         });
@@ -398,46 +400,67 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
               switch (_context5.prev = _context5.next) {
                 case 0:
                   message = _ref.data;
+                  _context5.prev = 1;
 
                   if (!(typeof Blob !== "undefined" && message instanceof Blob)) {
-                    _context5.next = 7;
+                    _context5.next = 17;
                     break;
                   }
 
-                  _context5.t0 = Uint8Array;
-                  _context5.next = 5;
-                  return message.arrayBuffer();
+                  if (!message.stream) {
+                    _context5.next = 9;
+                    break;
+                  }
 
-                case 5:
-                  _context5.t1 = _context5.sent;
-                  message = new _context5.t0(_context5.t1);
+                  _context5.next = 6;
+                  return msgpack.decodeAsync(message.stream());
 
-                case 7:
-                  _context5.prev = 7;
-                  message = _tinyMsgpack["default"].decode(message);
-                  _context5.next = 15;
+                case 6:
+                  _context5.t0 = _context5.sent;
+                  _context5.next = 14;
                   break;
 
-                case 11:
-                  _context5.prev = 11;
-                  _context5.t2 = _context5["catch"](7);
-                  console.log("decode error:", _context5.t2);
+                case 9:
+                  _context5.t1 = msgpack;
+                  _context5.next = 12;
+                  return message.arrayBuffer();
+
+                case 12:
+                  _context5.t2 = _context5.sent;
+                  _context5.t0 = _context5.t1.decode.call(_context5.t1, _context5.t2);
+
+                case 14:
+                  message = _context5.t0;
+                  _context5.next = 18;
+                  break;
+
+                case 17:
+                  message = msgpack.decode(message);
+
+                case 18:
+                  _context5.next = 24;
+                  break;
+
+                case 20:
+                  _context5.prev = 20;
+                  _context5.t3 = _context5["catch"](1);
+                  console.log("decode error:", _context5.t3);
                   return _context5.abrupt("return");
 
-                case 15:
+                case 24:
                   if (!(message.notification && _this4.listeners(message.notification).length)) {
-                    _context5.next = 21;
+                    _context5.next = 30;
                     break;
                   }
 
                   if (Object.keys(message.params).length) {
-                    _context5.next = 18;
+                    _context5.next = 27;
                     break;
                   }
 
                   return _context5.abrupt("return", _this4.emit(message.notification));
 
-                case 18:
+                case 27:
                   args = [message.notification];
                   if (message.params.constructor === Object) args.push(message.params);else // using for-loop instead of unshift/spread because performance is better
                     for (i = 0; i < message.params.length; i++) {
@@ -449,14 +472,14 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
                     _this4.emit.apply(_this4, args);
                   }));
 
-                case 21:
+                case 30:
                   if (_this4.queue[message.id]) {
-                    _context5.next = 25;
+                    _context5.next = 34;
                     break;
                   }
 
                   if (!(message.method && message.params)) {
-                    _context5.next = 24;
+                    _context5.next = 33;
                     break;
                   }
 
@@ -464,10 +487,10 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
                     _this4.emit(message.method, message.params);
                   }));
 
-                case 24:
+                case 33:
                   return _context5.abrupt("return");
 
-                case 25:
+                case 34:
                   // reject early since server's response is invalid
                   if ("error" in message === "result" in message) _this4.queue[message.id].promise[1](new Error("Server response malformed. Response must include either \"result\"" + " or \"error\", but not both."));
                   if (_this4.queue[message.id].timeout) clearTimeout(_this4.queue[message.id].timeout);
@@ -492,12 +515,12 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
 
                   _this4.queue[message.id] = null;
 
-                case 29:
+                case 38:
                 case "end":
                   return _context5.stop();
               }
             }
-          }, _callee5, null, [[7, 11]]);
+          }, _callee5, null, [[1, 20]]);
         }));
 
         return function (_x4) {

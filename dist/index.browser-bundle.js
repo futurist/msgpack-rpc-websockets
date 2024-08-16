@@ -72,13 +72,15 @@ var Client = /*#__PURE__*/function (_CommonClient) {
 }(_client["default"]);
 
 exports.Client = Client;
-},{"./lib/client":2,"./lib/client/websocket.browser":3,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/getPrototypeOf":8,"@babel/runtime/helpers/inherits":9,"@babel/runtime/helpers/interopRequireDefault":10,"@babel/runtime/helpers/possibleConstructorReturn":11}],2:[function(require,module,exports){
+},{"./lib/client":2,"./lib/client/websocket.browser":3,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/getPrototypeOf":8,"@babel/runtime/helpers/inherits":9,"@babel/runtime/helpers/interopRequireDefault":10,"@babel/runtime/helpers/possibleConstructorReturn":12}],2:[function(require,module,exports){
 /**
  * "Client" wraps "ws" or a browser-implemented "WebSocket" library
  * according to the environment providing MessagePack support on top.
  * @module Client
  */
 "use strict"; // @ts-ignore
+
+var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 
@@ -105,7 +107,7 @@ var _getPrototypeOf2 = _interopRequireDefault(require("@babel/runtime/helpers/ge
 
 var _eventemitter = require("eventemitter3");
 
-var _tinyMsgpack = _interopRequireDefault(require("tiny-msgpack"));
+var msgpack = _interopRequireWildcard(require("@msgpack/msgpack"));
 
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
@@ -215,7 +217,7 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
           id: rpc_id
         };
 
-        _this2.socket.send(_tinyMsgpack["default"].encode(message), ws_opts, function (error) {
+        _this2.socket.send(msgpack.encode(message), ws_opts, function (error) {
           if (error) return reject(error);
           _this2.queue[rpc_id] = {
             promise: [resolve, reject]
@@ -328,7 +330,7 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
           params: params || null
         };
 
-        _this3.socket.send(_tinyMsgpack["default"].encode(message), function (error) {
+        _this3.socket.send(msgpack.encode(message), function (error) {
           if (error) return reject(error);
           resolve();
         });
@@ -473,46 +475,67 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
               switch (_context5.prev = _context5.next) {
                 case 0:
                   message = _ref.data;
+                  _context5.prev = 1;
 
                   if (!(typeof Blob !== "undefined" && message instanceof Blob)) {
-                    _context5.next = 7;
+                    _context5.next = 17;
                     break;
                   }
 
-                  _context5.t0 = Uint8Array;
-                  _context5.next = 5;
-                  return message.arrayBuffer();
+                  if (!message.stream) {
+                    _context5.next = 9;
+                    break;
+                  }
 
-                case 5:
-                  _context5.t1 = _context5.sent;
-                  message = new _context5.t0(_context5.t1);
+                  _context5.next = 6;
+                  return msgpack.decodeAsync(message.stream());
 
-                case 7:
-                  _context5.prev = 7;
-                  message = _tinyMsgpack["default"].decode(message);
-                  _context5.next = 15;
+                case 6:
+                  _context5.t0 = _context5.sent;
+                  _context5.next = 14;
                   break;
 
-                case 11:
-                  _context5.prev = 11;
-                  _context5.t2 = _context5["catch"](7);
-                  console.log("decode error:", _context5.t2);
+                case 9:
+                  _context5.t1 = msgpack;
+                  _context5.next = 12;
+                  return message.arrayBuffer();
+
+                case 12:
+                  _context5.t2 = _context5.sent;
+                  _context5.t0 = _context5.t1.decode.call(_context5.t1, _context5.t2);
+
+                case 14:
+                  message = _context5.t0;
+                  _context5.next = 18;
+                  break;
+
+                case 17:
+                  message = msgpack.decode(message);
+
+                case 18:
+                  _context5.next = 24;
+                  break;
+
+                case 20:
+                  _context5.prev = 20;
+                  _context5.t3 = _context5["catch"](1);
+                  console.log("decode error:", _context5.t3);
                   return _context5.abrupt("return");
 
-                case 15:
+                case 24:
                   if (!(message.notification && _this4.listeners(message.notification).length)) {
-                    _context5.next = 21;
+                    _context5.next = 30;
                     break;
                   }
 
                   if (Object.keys(message.params).length) {
-                    _context5.next = 18;
+                    _context5.next = 27;
                     break;
                   }
 
                   return _context5.abrupt("return", _this4.emit(message.notification));
 
-                case 18:
+                case 27:
                   args = [message.notification];
                   if (message.params.constructor === Object) args.push(message.params);else // using for-loop instead of unshift/spread because performance is better
                     for (i = 0; i < message.params.length; i++) {
@@ -524,14 +547,14 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
                     _this4.emit.apply(_this4, args);
                   }));
 
-                case 21:
+                case 30:
                   if (_this4.queue[message.id]) {
-                    _context5.next = 25;
+                    _context5.next = 34;
                     break;
                   }
 
                   if (!(message.method && message.params)) {
-                    _context5.next = 24;
+                    _context5.next = 33;
                     break;
                   }
 
@@ -539,10 +562,10 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
                     _this4.emit(message.method, message.params);
                   }));
 
-                case 24:
+                case 33:
                   return _context5.abrupt("return");
 
-                case 25:
+                case 34:
                   // reject early since server's response is invalid
                   if ("error" in message === "result" in message) _this4.queue[message.id].promise[1](new Error("Server response malformed. Response must include either \"result\"" + " or \"error\", but not both."));
                   if (_this4.queue[message.id].timeout) clearTimeout(_this4.queue[message.id].timeout);
@@ -567,12 +590,12 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
 
                   _this4.queue[message.id] = null;
 
-                case 29:
+                case 38:
                 case "end":
                   return _context5.stop();
               }
             }
-          }, _callee5, null, [[7, 11]]);
+          }, _callee5, null, [[1, 20]]);
         }));
 
         return function (_x4) {
@@ -603,7 +626,7 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
 }(_eventemitter.EventEmitter);
 
 exports["default"] = CommonClient;
-},{"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":7,"@babel/runtime/helpers/getPrototypeOf":8,"@babel/runtime/helpers/inherits":9,"@babel/runtime/helpers/interopRequireDefault":10,"@babel/runtime/helpers/possibleConstructorReturn":11,"@babel/runtime/helpers/typeof":13,"@babel/runtime/regenerator":14,"eventemitter3":15,"tiny-msgpack":17}],3:[function(require,module,exports){
+},{"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":7,"@babel/runtime/helpers/getPrototypeOf":8,"@babel/runtime/helpers/inherits":9,"@babel/runtime/helpers/interopRequireDefault":10,"@babel/runtime/helpers/interopRequireWildcard":11,"@babel/runtime/helpers/possibleConstructorReturn":12,"@babel/runtime/helpers/typeof":14,"@babel/runtime/regenerator":15,"@msgpack/msgpack":25,"eventemitter3":32}],3:[function(require,module,exports){
 /**
  * WebSocket implements a browser-side WebSocket specification.
  * @module Client
@@ -726,7 +749,7 @@ var WebSocketBrowserImpl = /*#__PURE__*/function (_EventEmitter) {
 function _default(address, options) {
   return new WebSocketBrowserImpl(address, options, options.protocol);
 }
-},{"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":7,"@babel/runtime/helpers/getPrototypeOf":8,"@babel/runtime/helpers/inherits":9,"@babel/runtime/helpers/interopRequireDefault":10,"@babel/runtime/helpers/possibleConstructorReturn":11,"eventemitter3":15}],4:[function(require,module,exports){
+},{"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":7,"@babel/runtime/helpers/getPrototypeOf":8,"@babel/runtime/helpers/inherits":9,"@babel/runtime/helpers/interopRequireDefault":10,"@babel/runtime/helpers/possibleConstructorReturn":12,"eventemitter3":32}],4:[function(require,module,exports){
 function _assertThisInitialized(self) {
   if (self === void 0) {
     throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
@@ -828,7 +851,7 @@ function _inherits(subClass, superClass) {
 }
 
 module.exports = _inherits;
-},{"./setPrototypeOf":12}],10:[function(require,module,exports){
+},{"./setPrototypeOf":13}],10:[function(require,module,exports){
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
     "default": obj
@@ -837,6 +860,62 @@ function _interopRequireDefault(obj) {
 
 module.exports = _interopRequireDefault;
 },{}],11:[function(require,module,exports){
+var _typeof = require("../helpers/typeof");
+
+function _getRequireWildcardCache() {
+  if (typeof WeakMap !== "function") return null;
+  var cache = new WeakMap();
+
+  _getRequireWildcardCache = function _getRequireWildcardCache() {
+    return cache;
+  };
+
+  return cache;
+}
+
+function _interopRequireWildcard(obj) {
+  if (obj && obj.__esModule) {
+    return obj;
+  }
+
+  if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") {
+    return {
+      "default": obj
+    };
+  }
+
+  var cache = _getRequireWildcardCache();
+
+  if (cache && cache.has(obj)) {
+    return cache.get(obj);
+  }
+
+  var newObj = {};
+  var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
+
+  for (var key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
+
+      if (desc && (desc.get || desc.set)) {
+        Object.defineProperty(newObj, key, desc);
+      } else {
+        newObj[key] = obj[key];
+      }
+    }
+  }
+
+  newObj["default"] = obj;
+
+  if (cache) {
+    cache.set(obj, newObj);
+  }
+
+  return newObj;
+}
+
+module.exports = _interopRequireWildcard;
+},{"../helpers/typeof":14}],12:[function(require,module,exports){
 var _typeof = require("../helpers/typeof");
 
 var assertThisInitialized = require("./assertThisInitialized");
@@ -850,7 +929,7 @@ function _possibleConstructorReturn(self, call) {
 }
 
 module.exports = _possibleConstructorReturn;
-},{"../helpers/typeof":13,"./assertThisInitialized":4}],12:[function(require,module,exports){
+},{"../helpers/typeof":14,"./assertThisInitialized":4}],13:[function(require,module,exports){
 function _setPrototypeOf(o, p) {
   module.exports = _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
     o.__proto__ = p;
@@ -861,7 +940,7 @@ function _setPrototypeOf(o, p) {
 }
 
 module.exports = _setPrototypeOf;
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 function _typeof(obj) {
   "@babel/helpers - typeof";
 
@@ -879,10 +958,1754 @@ function _typeof(obj) {
 }
 
 module.exports = _typeof;
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module.exports = require("regenerator-runtime");
 
-},{"regenerator-runtime":16}],15:[function(require,module,exports){
+},{"regenerator-runtime":33}],16:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CachedKeyDecoder = void 0;
+const utf8_1 = require("./utils/utf8");
+const DEFAULT_MAX_KEY_LENGTH = 16;
+const DEFAULT_MAX_LENGTH_PER_KEY = 16;
+class CachedKeyDecoder {
+    constructor(maxKeyLength = DEFAULT_MAX_KEY_LENGTH, maxLengthPerKey = DEFAULT_MAX_LENGTH_PER_KEY) {
+        this.maxKeyLength = maxKeyLength;
+        this.maxLengthPerKey = maxLengthPerKey;
+        this.hit = 0;
+        this.miss = 0;
+        // avoid `new Array(N)`, which makes a sparse array,
+        // because a sparse array is typically slower than a non-sparse array.
+        this.caches = [];
+        for (let i = 0; i < this.maxKeyLength; i++) {
+            this.caches.push([]);
+        }
+    }
+    canBeCached(byteLength) {
+        return byteLength > 0 && byteLength <= this.maxKeyLength;
+    }
+    find(bytes, inputOffset, byteLength) {
+        const records = this.caches[byteLength - 1];
+        FIND_CHUNK: for (const record of records) {
+            const recordBytes = record.bytes;
+            for (let j = 0; j < byteLength; j++) {
+                if (recordBytes[j] !== bytes[inputOffset + j]) {
+                    continue FIND_CHUNK;
+                }
+            }
+            return record.str;
+        }
+        return null;
+    }
+    store(bytes, value) {
+        const records = this.caches[bytes.length - 1];
+        const record = { bytes, str: value };
+        if (records.length >= this.maxLengthPerKey) {
+            // `records` are full!
+            // Set `record` to an arbitrary position.
+            records[(Math.random() * records.length) | 0] = record;
+        }
+        else {
+            records.push(record);
+        }
+    }
+    decode(bytes, inputOffset, byteLength) {
+        const cachedValue = this.find(bytes, inputOffset, byteLength);
+        if (cachedValue != null) {
+            this.hit++;
+            return cachedValue;
+        }
+        this.miss++;
+        const str = (0, utf8_1.utf8DecodeJs)(bytes, inputOffset, byteLength);
+        // Ensure to copy a slice of bytes because the byte may be NodeJS Buffer and Buffer#slice() returns a reference to its internal ArrayBuffer.
+        const slicedCopyOfBytes = Uint8Array.prototype.slice.call(bytes, inputOffset, inputOffset + byteLength);
+        this.store(slicedCopyOfBytes, str);
+        return str;
+    }
+}
+exports.CachedKeyDecoder = CachedKeyDecoder;
+
+},{"./utils/utf8":31}],17:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DecodeError = void 0;
+class DecodeError extends Error {
+    constructor(message) {
+        super(message);
+        // fix the prototype chain in a cross-platform way
+        const proto = Object.create(DecodeError.prototype);
+        Object.setPrototypeOf(this, proto);
+        Object.defineProperty(this, "name", {
+            configurable: true,
+            enumerable: false,
+            value: DecodeError.name,
+        });
+    }
+}
+exports.DecodeError = DecodeError;
+
+},{}],18:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Decoder = exports.DataViewIndexOutOfBoundsError = void 0;
+const prettyByte_1 = require("./utils/prettyByte");
+const ExtensionCodec_1 = require("./ExtensionCodec");
+const int_1 = require("./utils/int");
+const utf8_1 = require("./utils/utf8");
+const typedArrays_1 = require("./utils/typedArrays");
+const CachedKeyDecoder_1 = require("./CachedKeyDecoder");
+const DecodeError_1 = require("./DecodeError");
+const STATE_ARRAY = "array";
+const STATE_MAP_KEY = "map_key";
+const STATE_MAP_VALUE = "map_value";
+const isValidMapKeyType = (key) => {
+    return typeof key === "string" || typeof key === "number";
+};
+const HEAD_BYTE_REQUIRED = -1;
+const EMPTY_VIEW = new DataView(new ArrayBuffer(0));
+const EMPTY_BYTES = new Uint8Array(EMPTY_VIEW.buffer);
+try {
+    // IE11: The spec says it should throw RangeError,
+    // IE11: but in IE11 it throws TypeError.
+    EMPTY_VIEW.getInt8(0);
+}
+catch (e) {
+    if (!(e instanceof RangeError)) {
+        throw new Error("This module is not supported in the current JavaScript engine because DataView does not throw RangeError on out-of-bounds access");
+    }
+}
+exports.DataViewIndexOutOfBoundsError = RangeError;
+const MORE_DATA = new exports.DataViewIndexOutOfBoundsError("Insufficient data");
+const sharedCachedKeyDecoder = new CachedKeyDecoder_1.CachedKeyDecoder();
+class Decoder {
+    constructor(options) {
+        var _a, _b, _c, _d, _e, _f, _g;
+        this.totalPos = 0;
+        this.pos = 0;
+        this.view = EMPTY_VIEW;
+        this.bytes = EMPTY_BYTES;
+        this.headByte = HEAD_BYTE_REQUIRED;
+        this.stack = [];
+        this.extensionCodec = (_a = options === null || options === void 0 ? void 0 : options.extensionCodec) !== null && _a !== void 0 ? _a : ExtensionCodec_1.ExtensionCodec.defaultCodec;
+        this.context = options === null || options === void 0 ? void 0 : options.context; // needs a type assertion because EncoderOptions has no context property when ContextType is undefined
+        this.useBigInt64 = (_b = options === null || options === void 0 ? void 0 : options.useBigInt64) !== null && _b !== void 0 ? _b : false;
+        this.maxStrLength = (_c = options === null || options === void 0 ? void 0 : options.maxStrLength) !== null && _c !== void 0 ? _c : int_1.UINT32_MAX;
+        this.maxBinLength = (_d = options === null || options === void 0 ? void 0 : options.maxBinLength) !== null && _d !== void 0 ? _d : int_1.UINT32_MAX;
+        this.maxArrayLength = (_e = options === null || options === void 0 ? void 0 : options.maxArrayLength) !== null && _e !== void 0 ? _e : int_1.UINT32_MAX;
+        this.maxMapLength = (_f = options === null || options === void 0 ? void 0 : options.maxMapLength) !== null && _f !== void 0 ? _f : int_1.UINT32_MAX;
+        this.maxExtLength = (_g = options === null || options === void 0 ? void 0 : options.maxExtLength) !== null && _g !== void 0 ? _g : int_1.UINT32_MAX;
+        this.keyDecoder = ((options === null || options === void 0 ? void 0 : options.keyDecoder) !== undefined) ? options.keyDecoder : sharedCachedKeyDecoder;
+    }
+    reinitializeState() {
+        this.totalPos = 0;
+        this.headByte = HEAD_BYTE_REQUIRED;
+        this.stack.length = 0;
+        // view, bytes, and pos will be re-initialized in setBuffer()
+    }
+    setBuffer(buffer) {
+        this.bytes = (0, typedArrays_1.ensureUint8Array)(buffer);
+        this.view = (0, typedArrays_1.createDataView)(this.bytes);
+        this.pos = 0;
+    }
+    appendBuffer(buffer) {
+        if (this.headByte === HEAD_BYTE_REQUIRED && !this.hasRemaining(1)) {
+            this.setBuffer(buffer);
+        }
+        else {
+            const remainingData = this.bytes.subarray(this.pos);
+            const newData = (0, typedArrays_1.ensureUint8Array)(buffer);
+            // concat remainingData + newData
+            const newBuffer = new Uint8Array(remainingData.length + newData.length);
+            newBuffer.set(remainingData);
+            newBuffer.set(newData, remainingData.length);
+            this.setBuffer(newBuffer);
+        }
+    }
+    hasRemaining(size) {
+        return this.view.byteLength - this.pos >= size;
+    }
+    createExtraByteError(posToShow) {
+        const { view, pos } = this;
+        return new RangeError(`Extra ${view.byteLength - pos} of ${view.byteLength} byte(s) found at buffer[${posToShow}]`);
+    }
+    /**
+     * @throws {@link DecodeError}
+     * @throws {@link RangeError}
+     */
+    decode(buffer) {
+        this.reinitializeState();
+        this.setBuffer(buffer);
+        const object = this.doDecodeSync();
+        if (this.hasRemaining(1)) {
+            throw this.createExtraByteError(this.pos);
+        }
+        return object;
+    }
+    *decodeMulti(buffer) {
+        this.reinitializeState();
+        this.setBuffer(buffer);
+        while (this.hasRemaining(1)) {
+            yield this.doDecodeSync();
+        }
+    }
+    async decodeAsync(stream) {
+        let decoded = false;
+        let object;
+        for await (const buffer of stream) {
+            if (decoded) {
+                throw this.createExtraByteError(this.totalPos);
+            }
+            this.appendBuffer(buffer);
+            try {
+                object = this.doDecodeSync();
+                decoded = true;
+            }
+            catch (e) {
+                if (!(e instanceof exports.DataViewIndexOutOfBoundsError)) {
+                    throw e; // rethrow
+                }
+                // fallthrough
+            }
+            this.totalPos += this.pos;
+        }
+        if (decoded) {
+            if (this.hasRemaining(1)) {
+                throw this.createExtraByteError(this.totalPos);
+            }
+            return object;
+        }
+        const { headByte, pos, totalPos } = this;
+        throw new RangeError(`Insufficient data in parsing ${(0, prettyByte_1.prettyByte)(headByte)} at ${totalPos} (${pos} in the current buffer)`);
+    }
+    decodeArrayStream(stream) {
+        return this.decodeMultiAsync(stream, true);
+    }
+    decodeStream(stream) {
+        return this.decodeMultiAsync(stream, false);
+    }
+    async *decodeMultiAsync(stream, isArray) {
+        let isArrayHeaderRequired = isArray;
+        let arrayItemsLeft = -1;
+        for await (const buffer of stream) {
+            if (isArray && arrayItemsLeft === 0) {
+                throw this.createExtraByteError(this.totalPos);
+            }
+            this.appendBuffer(buffer);
+            if (isArrayHeaderRequired) {
+                arrayItemsLeft = this.readArraySize();
+                isArrayHeaderRequired = false;
+                this.complete();
+            }
+            try {
+                while (true) {
+                    yield this.doDecodeSync();
+                    if (--arrayItemsLeft === 0) {
+                        break;
+                    }
+                }
+            }
+            catch (e) {
+                if (!(e instanceof exports.DataViewIndexOutOfBoundsError)) {
+                    throw e; // rethrow
+                }
+                // fallthrough
+            }
+            this.totalPos += this.pos;
+        }
+    }
+    doDecodeSync() {
+        DECODE: while (true) {
+            const headByte = this.readHeadByte();
+            let object;
+            if (headByte >= 0xe0) {
+                // negative fixint (111x xxxx) 0xe0 - 0xff
+                object = headByte - 0x100;
+            }
+            else if (headByte < 0xc0) {
+                if (headByte < 0x80) {
+                    // positive fixint (0xxx xxxx) 0x00 - 0x7f
+                    object = headByte;
+                }
+                else if (headByte < 0x90) {
+                    // fixmap (1000 xxxx) 0x80 - 0x8f
+                    const size = headByte - 0x80;
+                    if (size !== 0) {
+                        this.pushMapState(size);
+                        this.complete();
+                        continue DECODE;
+                    }
+                    else {
+                        object = {};
+                    }
+                }
+                else if (headByte < 0xa0) {
+                    // fixarray (1001 xxxx) 0x90 - 0x9f
+                    const size = headByte - 0x90;
+                    if (size !== 0) {
+                        this.pushArrayState(size);
+                        this.complete();
+                        continue DECODE;
+                    }
+                    else {
+                        object = [];
+                    }
+                }
+                else {
+                    // fixstr (101x xxxx) 0xa0 - 0xbf
+                    const byteLength = headByte - 0xa0;
+                    object = this.decodeUtf8String(byteLength, 0);
+                }
+            }
+            else if (headByte === 0xc0) {
+                // nil
+                object = null;
+            }
+            else if (headByte === 0xc2) {
+                // false
+                object = false;
+            }
+            else if (headByte === 0xc3) {
+                // true
+                object = true;
+            }
+            else if (headByte === 0xca) {
+                // float 32
+                object = this.readF32();
+            }
+            else if (headByte === 0xcb) {
+                // float 64
+                object = this.readF64();
+            }
+            else if (headByte === 0xcc) {
+                // uint 8
+                object = this.readU8();
+            }
+            else if (headByte === 0xcd) {
+                // uint 16
+                object = this.readU16();
+            }
+            else if (headByte === 0xce) {
+                // uint 32
+                object = this.readU32();
+            }
+            else if (headByte === 0xcf) {
+                // uint 64
+                if (this.useBigInt64) {
+                    object = this.readU64AsBigInt();
+                }
+                else {
+                    object = this.readU64();
+                }
+            }
+            else if (headByte === 0xd0) {
+                // int 8
+                object = this.readI8();
+            }
+            else if (headByte === 0xd1) {
+                // int 16
+                object = this.readI16();
+            }
+            else if (headByte === 0xd2) {
+                // int 32
+                object = this.readI32();
+            }
+            else if (headByte === 0xd3) {
+                // int 64
+                if (this.useBigInt64) {
+                    object = this.readI64AsBigInt();
+                }
+                else {
+                    object = this.readI64();
+                }
+            }
+            else if (headByte === 0xd9) {
+                // str 8
+                const byteLength = this.lookU8();
+                object = this.decodeUtf8String(byteLength, 1);
+            }
+            else if (headByte === 0xda) {
+                // str 16
+                const byteLength = this.lookU16();
+                object = this.decodeUtf8String(byteLength, 2);
+            }
+            else if (headByte === 0xdb) {
+                // str 32
+                const byteLength = this.lookU32();
+                object = this.decodeUtf8String(byteLength, 4);
+            }
+            else if (headByte === 0xdc) {
+                // array 16
+                const size = this.readU16();
+                if (size !== 0) {
+                    this.pushArrayState(size);
+                    this.complete();
+                    continue DECODE;
+                }
+                else {
+                    object = [];
+                }
+            }
+            else if (headByte === 0xdd) {
+                // array 32
+                const size = this.readU32();
+                if (size !== 0) {
+                    this.pushArrayState(size);
+                    this.complete();
+                    continue DECODE;
+                }
+                else {
+                    object = [];
+                }
+            }
+            else if (headByte === 0xde) {
+                // map 16
+                const size = this.readU16();
+                if (size !== 0) {
+                    this.pushMapState(size);
+                    this.complete();
+                    continue DECODE;
+                }
+                else {
+                    object = {};
+                }
+            }
+            else if (headByte === 0xdf) {
+                // map 32
+                const size = this.readU32();
+                if (size !== 0) {
+                    this.pushMapState(size);
+                    this.complete();
+                    continue DECODE;
+                }
+                else {
+                    object = {};
+                }
+            }
+            else if (headByte === 0xc4) {
+                // bin 8
+                const size = this.lookU8();
+                object = this.decodeBinary(size, 1);
+            }
+            else if (headByte === 0xc5) {
+                // bin 16
+                const size = this.lookU16();
+                object = this.decodeBinary(size, 2);
+            }
+            else if (headByte === 0xc6) {
+                // bin 32
+                const size = this.lookU32();
+                object = this.decodeBinary(size, 4);
+            }
+            else if (headByte === 0xd4) {
+                // fixext 1
+                object = this.decodeExtension(1, 0);
+            }
+            else if (headByte === 0xd5) {
+                // fixext 2
+                object = this.decodeExtension(2, 0);
+            }
+            else if (headByte === 0xd6) {
+                // fixext 4
+                object = this.decodeExtension(4, 0);
+            }
+            else if (headByte === 0xd7) {
+                // fixext 8
+                object = this.decodeExtension(8, 0);
+            }
+            else if (headByte === 0xd8) {
+                // fixext 16
+                object = this.decodeExtension(16, 0);
+            }
+            else if (headByte === 0xc7) {
+                // ext 8
+                const size = this.lookU8();
+                object = this.decodeExtension(size, 1);
+            }
+            else if (headByte === 0xc8) {
+                // ext 16
+                const size = this.lookU16();
+                object = this.decodeExtension(size, 2);
+            }
+            else if (headByte === 0xc9) {
+                // ext 32
+                const size = this.lookU32();
+                object = this.decodeExtension(size, 4);
+            }
+            else {
+                throw new DecodeError_1.DecodeError(`Unrecognized type byte: ${(0, prettyByte_1.prettyByte)(headByte)}`);
+            }
+            this.complete();
+            const stack = this.stack;
+            while (stack.length > 0) {
+                // arrays and maps
+                const state = stack[stack.length - 1];
+                if (state.type === STATE_ARRAY) {
+                    state.array[state.position] = object;
+                    state.position++;
+                    if (state.position === state.size) {
+                        stack.pop();
+                        object = state.array;
+                    }
+                    else {
+                        continue DECODE;
+                    }
+                }
+                else if (state.type === STATE_MAP_KEY) {
+                    if (!isValidMapKeyType(object)) {
+                        throw new DecodeError_1.DecodeError("The type of key must be string or number but " + typeof object);
+                    }
+                    if (object === "__proto__") {
+                        throw new DecodeError_1.DecodeError("The key __proto__ is not allowed");
+                    }
+                    state.key = object;
+                    state.type = STATE_MAP_VALUE;
+                    continue DECODE;
+                }
+                else {
+                    // it must be `state.type === State.MAP_VALUE` here
+                    state.map[state.key] = object;
+                    state.readCount++;
+                    if (state.readCount === state.size) {
+                        stack.pop();
+                        object = state.map;
+                    }
+                    else {
+                        state.key = null;
+                        state.type = STATE_MAP_KEY;
+                        continue DECODE;
+                    }
+                }
+            }
+            return object;
+        }
+    }
+    readHeadByte() {
+        if (this.headByte === HEAD_BYTE_REQUIRED) {
+            this.headByte = this.readU8();
+            // console.log("headByte", prettyByte(this.headByte));
+        }
+        return this.headByte;
+    }
+    complete() {
+        this.headByte = HEAD_BYTE_REQUIRED;
+    }
+    readArraySize() {
+        const headByte = this.readHeadByte();
+        switch (headByte) {
+            case 0xdc:
+                return this.readU16();
+            case 0xdd:
+                return this.readU32();
+            default: {
+                if (headByte < 0xa0) {
+                    return headByte - 0x90;
+                }
+                else {
+                    throw new DecodeError_1.DecodeError(`Unrecognized array type byte: ${(0, prettyByte_1.prettyByte)(headByte)}`);
+                }
+            }
+        }
+    }
+    pushMapState(size) {
+        if (size > this.maxMapLength) {
+            throw new DecodeError_1.DecodeError(`Max length exceeded: map length (${size}) > maxMapLengthLength (${this.maxMapLength})`);
+        }
+        this.stack.push({
+            type: STATE_MAP_KEY,
+            size,
+            key: null,
+            readCount: 0,
+            map: {},
+        });
+    }
+    pushArrayState(size) {
+        if (size > this.maxArrayLength) {
+            throw new DecodeError_1.DecodeError(`Max length exceeded: array length (${size}) > maxArrayLength (${this.maxArrayLength})`);
+        }
+        this.stack.push({
+            type: STATE_ARRAY,
+            size,
+            array: new Array(size),
+            position: 0,
+        });
+    }
+    decodeUtf8String(byteLength, headerOffset) {
+        var _a;
+        if (byteLength > this.maxStrLength) {
+            throw new DecodeError_1.DecodeError(`Max length exceeded: UTF-8 byte length (${byteLength}) > maxStrLength (${this.maxStrLength})`);
+        }
+        if (this.bytes.byteLength < this.pos + headerOffset + byteLength) {
+            throw MORE_DATA;
+        }
+        const offset = this.pos + headerOffset;
+        let object;
+        if (this.stateIsMapKey() && ((_a = this.keyDecoder) === null || _a === void 0 ? void 0 : _a.canBeCached(byteLength))) {
+            object = this.keyDecoder.decode(this.bytes, offset, byteLength);
+        }
+        else {
+            object = (0, utf8_1.utf8Decode)(this.bytes, offset, byteLength);
+        }
+        this.pos += headerOffset + byteLength;
+        return object;
+    }
+    stateIsMapKey() {
+        if (this.stack.length > 0) {
+            const state = this.stack[this.stack.length - 1];
+            return state.type === STATE_MAP_KEY;
+        }
+        return false;
+    }
+    decodeBinary(byteLength, headOffset) {
+        if (byteLength > this.maxBinLength) {
+            throw new DecodeError_1.DecodeError(`Max length exceeded: bin length (${byteLength}) > maxBinLength (${this.maxBinLength})`);
+        }
+        if (!this.hasRemaining(byteLength + headOffset)) {
+            throw MORE_DATA;
+        }
+        const offset = this.pos + headOffset;
+        const object = this.bytes.subarray(offset, offset + byteLength);
+        this.pos += headOffset + byteLength;
+        return object;
+    }
+    decodeExtension(size, headOffset) {
+        if (size > this.maxExtLength) {
+            throw new DecodeError_1.DecodeError(`Max length exceeded: ext length (${size}) > maxExtLength (${this.maxExtLength})`);
+        }
+        const extType = this.view.getInt8(this.pos + headOffset);
+        const data = this.decodeBinary(size, headOffset + 1 /* extType */);
+        return this.extensionCodec.decode(data, extType, this.context);
+    }
+    lookU8() {
+        return this.view.getUint8(this.pos);
+    }
+    lookU16() {
+        return this.view.getUint16(this.pos);
+    }
+    lookU32() {
+        return this.view.getUint32(this.pos);
+    }
+    readU8() {
+        const value = this.view.getUint8(this.pos);
+        this.pos++;
+        return value;
+    }
+    readI8() {
+        const value = this.view.getInt8(this.pos);
+        this.pos++;
+        return value;
+    }
+    readU16() {
+        const value = this.view.getUint16(this.pos);
+        this.pos += 2;
+        return value;
+    }
+    readI16() {
+        const value = this.view.getInt16(this.pos);
+        this.pos += 2;
+        return value;
+    }
+    readU32() {
+        const value = this.view.getUint32(this.pos);
+        this.pos += 4;
+        return value;
+    }
+    readI32() {
+        const value = this.view.getInt32(this.pos);
+        this.pos += 4;
+        return value;
+    }
+    readU64() {
+        const value = (0, int_1.getUint64)(this.view, this.pos);
+        this.pos += 8;
+        return value;
+    }
+    readI64() {
+        const value = (0, int_1.getInt64)(this.view, this.pos);
+        this.pos += 8;
+        return value;
+    }
+    readU64AsBigInt() {
+        const value = this.view.getBigUint64(this.pos);
+        this.pos += 8;
+        return value;
+    }
+    readI64AsBigInt() {
+        const value = this.view.getBigInt64(this.pos);
+        this.pos += 8;
+        return value;
+    }
+    readF32() {
+        const value = this.view.getFloat32(this.pos);
+        this.pos += 4;
+        return value;
+    }
+    readF64() {
+        const value = this.view.getFloat64(this.pos);
+        this.pos += 8;
+        return value;
+    }
+}
+exports.Decoder = Decoder;
+
+},{"./CachedKeyDecoder":16,"./DecodeError":17,"./ExtensionCodec":21,"./utils/int":27,"./utils/prettyByte":28,"./utils/typedArrays":30,"./utils/utf8":31}],19:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Encoder = exports.DEFAULT_INITIAL_BUFFER_SIZE = exports.DEFAULT_MAX_DEPTH = void 0;
+const utf8_1 = require("./utils/utf8");
+const ExtensionCodec_1 = require("./ExtensionCodec");
+const int_1 = require("./utils/int");
+const typedArrays_1 = require("./utils/typedArrays");
+exports.DEFAULT_MAX_DEPTH = 100;
+exports.DEFAULT_INITIAL_BUFFER_SIZE = 2048;
+class Encoder {
+    constructor(options) {
+        var _a, _b, _c, _d, _e, _f, _g, _h;
+        this.extensionCodec = (_a = options === null || options === void 0 ? void 0 : options.extensionCodec) !== null && _a !== void 0 ? _a : ExtensionCodec_1.ExtensionCodec.defaultCodec;
+        this.context = options === null || options === void 0 ? void 0 : options.context; // needs a type assertion because EncoderOptions has no context property when ContextType is undefined
+        this.useBigInt64 = (_b = options === null || options === void 0 ? void 0 : options.useBigInt64) !== null && _b !== void 0 ? _b : false;
+        this.maxDepth = (_c = options === null || options === void 0 ? void 0 : options.maxDepth) !== null && _c !== void 0 ? _c : exports.DEFAULT_MAX_DEPTH;
+        this.initialBufferSize = (_d = options === null || options === void 0 ? void 0 : options.initialBufferSize) !== null && _d !== void 0 ? _d : exports.DEFAULT_INITIAL_BUFFER_SIZE;
+        this.sortKeys = (_e = options === null || options === void 0 ? void 0 : options.sortKeys) !== null && _e !== void 0 ? _e : false;
+        this.forceFloat32 = (_f = options === null || options === void 0 ? void 0 : options.forceFloat32) !== null && _f !== void 0 ? _f : false;
+        this.ignoreUndefined = (_g = options === null || options === void 0 ? void 0 : options.ignoreUndefined) !== null && _g !== void 0 ? _g : false;
+        this.forceIntegerToFloat = (_h = options === null || options === void 0 ? void 0 : options.forceIntegerToFloat) !== null && _h !== void 0 ? _h : false;
+        this.pos = 0;
+        this.view = new DataView(new ArrayBuffer(this.initialBufferSize));
+        this.bytes = new Uint8Array(this.view.buffer);
+    }
+    reinitializeState() {
+        this.pos = 0;
+    }
+    /**
+     * This is almost equivalent to {@link Encoder#encode}, but it returns an reference of the encoder's internal buffer and thus much faster than {@link Encoder#encode}.
+     *
+     * @returns Encodes the object and returns a shared reference the encoder's internal buffer.
+     */
+    encodeSharedRef(object) {
+        this.reinitializeState();
+        this.doEncode(object, 1);
+        return this.bytes.subarray(0, this.pos);
+    }
+    /**
+     * @returns Encodes the object and returns a copy of the encoder's internal buffer.
+     */
+    encode(object) {
+        this.reinitializeState();
+        this.doEncode(object, 1);
+        return this.bytes.slice(0, this.pos);
+    }
+    doEncode(object, depth) {
+        if (depth > this.maxDepth) {
+            throw new Error(`Too deep objects in depth ${depth}`);
+        }
+        if (object == null) {
+            this.encodeNil();
+        }
+        else if (typeof object === "boolean") {
+            this.encodeBoolean(object);
+        }
+        else if (typeof object === "number") {
+            if (!this.forceIntegerToFloat) {
+                this.encodeNumber(object);
+            }
+            else {
+                this.encodeNumberAsFloat(object);
+            }
+        }
+        else if (typeof object === "string") {
+            this.encodeString(object);
+        }
+        else if (this.useBigInt64 && typeof object === "bigint") {
+            this.encodeBigInt64(object);
+        }
+        else {
+            this.encodeObject(object, depth);
+        }
+    }
+    ensureBufferSizeToWrite(sizeToWrite) {
+        const requiredSize = this.pos + sizeToWrite;
+        if (this.view.byteLength < requiredSize) {
+            this.resizeBuffer(requiredSize * 2);
+        }
+    }
+    resizeBuffer(newSize) {
+        const newBuffer = new ArrayBuffer(newSize);
+        const newBytes = new Uint8Array(newBuffer);
+        const newView = new DataView(newBuffer);
+        newBytes.set(this.bytes);
+        this.view = newView;
+        this.bytes = newBytes;
+    }
+    encodeNil() {
+        this.writeU8(0xc0);
+    }
+    encodeBoolean(object) {
+        if (object === false) {
+            this.writeU8(0xc2);
+        }
+        else {
+            this.writeU8(0xc3);
+        }
+    }
+    encodeNumber(object) {
+        if (!this.forceIntegerToFloat && Number.isSafeInteger(object)) {
+            if (object >= 0) {
+                if (object < 0x80) {
+                    // positive fixint
+                    this.writeU8(object);
+                }
+                else if (object < 0x100) {
+                    // uint 8
+                    this.writeU8(0xcc);
+                    this.writeU8(object);
+                }
+                else if (object < 0x10000) {
+                    // uint 16
+                    this.writeU8(0xcd);
+                    this.writeU16(object);
+                }
+                else if (object < 0x100000000) {
+                    // uint 32
+                    this.writeU8(0xce);
+                    this.writeU32(object);
+                }
+                else if (!this.useBigInt64) {
+                    // uint 64
+                    this.writeU8(0xcf);
+                    this.writeU64(object);
+                }
+                else {
+                    this.encodeNumberAsFloat(object);
+                }
+            }
+            else {
+                if (object >= -0x20) {
+                    // negative fixint
+                    this.writeU8(0xe0 | (object + 0x20));
+                }
+                else if (object >= -0x80) {
+                    // int 8
+                    this.writeU8(0xd0);
+                    this.writeI8(object);
+                }
+                else if (object >= -0x8000) {
+                    // int 16
+                    this.writeU8(0xd1);
+                    this.writeI16(object);
+                }
+                else if (object >= -0x80000000) {
+                    // int 32
+                    this.writeU8(0xd2);
+                    this.writeI32(object);
+                }
+                else if (!this.useBigInt64) {
+                    // int 64
+                    this.writeU8(0xd3);
+                    this.writeI64(object);
+                }
+                else {
+                    this.encodeNumberAsFloat(object);
+                }
+            }
+        }
+        else {
+            this.encodeNumberAsFloat(object);
+        }
+    }
+    encodeNumberAsFloat(object) {
+        if (this.forceFloat32) {
+            // float 32
+            this.writeU8(0xca);
+            this.writeF32(object);
+        }
+        else {
+            // float 64
+            this.writeU8(0xcb);
+            this.writeF64(object);
+        }
+    }
+    encodeBigInt64(object) {
+        if (object >= BigInt(0)) {
+            // uint 64
+            this.writeU8(0xcf);
+            this.writeBigUint64(object);
+        }
+        else {
+            // int 64
+            this.writeU8(0xd3);
+            this.writeBigInt64(object);
+        }
+    }
+    writeStringHeader(byteLength) {
+        if (byteLength < 32) {
+            // fixstr
+            this.writeU8(0xa0 + byteLength);
+        }
+        else if (byteLength < 0x100) {
+            // str 8
+            this.writeU8(0xd9);
+            this.writeU8(byteLength);
+        }
+        else if (byteLength < 0x10000) {
+            // str 16
+            this.writeU8(0xda);
+            this.writeU16(byteLength);
+        }
+        else if (byteLength < 0x100000000) {
+            // str 32
+            this.writeU8(0xdb);
+            this.writeU32(byteLength);
+        }
+        else {
+            throw new Error(`Too long string: ${byteLength} bytes in UTF-8`);
+        }
+    }
+    encodeString(object) {
+        const maxHeaderSize = 1 + 4;
+        const byteLength = (0, utf8_1.utf8Count)(object);
+        this.ensureBufferSizeToWrite(maxHeaderSize + byteLength);
+        this.writeStringHeader(byteLength);
+        (0, utf8_1.utf8Encode)(object, this.bytes, this.pos);
+        this.pos += byteLength;
+    }
+    encodeObject(object, depth) {
+        // try to encode objects with custom codec first of non-primitives
+        const ext = this.extensionCodec.tryToEncode(object, this.context);
+        if (ext != null) {
+            this.encodeExtension(ext);
+        }
+        else if (Array.isArray(object)) {
+            this.encodeArray(object, depth);
+        }
+        else if (ArrayBuffer.isView(object)) {
+            this.encodeBinary(object);
+        }
+        else if (typeof object === "object") {
+            this.encodeMap(object, depth);
+        }
+        else {
+            // symbol, function and other special object come here unless extensionCodec handles them.
+            throw new Error(`Unrecognized object: ${Object.prototype.toString.apply(object)}`);
+        }
+    }
+    encodeBinary(object) {
+        const size = object.byteLength;
+        if (size < 0x100) {
+            // bin 8
+            this.writeU8(0xc4);
+            this.writeU8(size);
+        }
+        else if (size < 0x10000) {
+            // bin 16
+            this.writeU8(0xc5);
+            this.writeU16(size);
+        }
+        else if (size < 0x100000000) {
+            // bin 32
+            this.writeU8(0xc6);
+            this.writeU32(size);
+        }
+        else {
+            throw new Error(`Too large binary: ${size}`);
+        }
+        const bytes = (0, typedArrays_1.ensureUint8Array)(object);
+        this.writeU8a(bytes);
+    }
+    encodeArray(object, depth) {
+        const size = object.length;
+        if (size < 16) {
+            // fixarray
+            this.writeU8(0x90 + size);
+        }
+        else if (size < 0x10000) {
+            // array 16
+            this.writeU8(0xdc);
+            this.writeU16(size);
+        }
+        else if (size < 0x100000000) {
+            // array 32
+            this.writeU8(0xdd);
+            this.writeU32(size);
+        }
+        else {
+            throw new Error(`Too large array: ${size}`);
+        }
+        for (const item of object) {
+            this.doEncode(item, depth + 1);
+        }
+    }
+    countWithoutUndefined(object, keys) {
+        let count = 0;
+        for (const key of keys) {
+            if (object[key] !== undefined) {
+                count++;
+            }
+        }
+        return count;
+    }
+    encodeMap(object, depth) {
+        const keys = Object.keys(object);
+        if (this.sortKeys) {
+            keys.sort();
+        }
+        const size = this.ignoreUndefined ? this.countWithoutUndefined(object, keys) : keys.length;
+        if (size < 16) {
+            // fixmap
+            this.writeU8(0x80 + size);
+        }
+        else if (size < 0x10000) {
+            // map 16
+            this.writeU8(0xde);
+            this.writeU16(size);
+        }
+        else if (size < 0x100000000) {
+            // map 32
+            this.writeU8(0xdf);
+            this.writeU32(size);
+        }
+        else {
+            throw new Error(`Too large map object: ${size}`);
+        }
+        for (const key of keys) {
+            const value = object[key];
+            if (!(this.ignoreUndefined && value === undefined)) {
+                this.encodeString(key);
+                this.doEncode(value, depth + 1);
+            }
+        }
+    }
+    encodeExtension(ext) {
+        const size = ext.data.length;
+        if (size === 1) {
+            // fixext 1
+            this.writeU8(0xd4);
+        }
+        else if (size === 2) {
+            // fixext 2
+            this.writeU8(0xd5);
+        }
+        else if (size === 4) {
+            // fixext 4
+            this.writeU8(0xd6);
+        }
+        else if (size === 8) {
+            // fixext 8
+            this.writeU8(0xd7);
+        }
+        else if (size === 16) {
+            // fixext 16
+            this.writeU8(0xd8);
+        }
+        else if (size < 0x100) {
+            // ext 8
+            this.writeU8(0xc7);
+            this.writeU8(size);
+        }
+        else if (size < 0x10000) {
+            // ext 16
+            this.writeU8(0xc8);
+            this.writeU16(size);
+        }
+        else if (size < 0x100000000) {
+            // ext 32
+            this.writeU8(0xc9);
+            this.writeU32(size);
+        }
+        else {
+            throw new Error(`Too large extension object: ${size}`);
+        }
+        this.writeI8(ext.type);
+        this.writeU8a(ext.data);
+    }
+    writeU8(value) {
+        this.ensureBufferSizeToWrite(1);
+        this.view.setUint8(this.pos, value);
+        this.pos++;
+    }
+    writeU8a(values) {
+        const size = values.length;
+        this.ensureBufferSizeToWrite(size);
+        this.bytes.set(values, this.pos);
+        this.pos += size;
+    }
+    writeI8(value) {
+        this.ensureBufferSizeToWrite(1);
+        this.view.setInt8(this.pos, value);
+        this.pos++;
+    }
+    writeU16(value) {
+        this.ensureBufferSizeToWrite(2);
+        this.view.setUint16(this.pos, value);
+        this.pos += 2;
+    }
+    writeI16(value) {
+        this.ensureBufferSizeToWrite(2);
+        this.view.setInt16(this.pos, value);
+        this.pos += 2;
+    }
+    writeU32(value) {
+        this.ensureBufferSizeToWrite(4);
+        this.view.setUint32(this.pos, value);
+        this.pos += 4;
+    }
+    writeI32(value) {
+        this.ensureBufferSizeToWrite(4);
+        this.view.setInt32(this.pos, value);
+        this.pos += 4;
+    }
+    writeF32(value) {
+        this.ensureBufferSizeToWrite(4);
+        this.view.setFloat32(this.pos, value);
+        this.pos += 4;
+    }
+    writeF64(value) {
+        this.ensureBufferSizeToWrite(8);
+        this.view.setFloat64(this.pos, value);
+        this.pos += 8;
+    }
+    writeU64(value) {
+        this.ensureBufferSizeToWrite(8);
+        (0, int_1.setUint64)(this.view, this.pos, value);
+        this.pos += 8;
+    }
+    writeI64(value) {
+        this.ensureBufferSizeToWrite(8);
+        (0, int_1.setInt64)(this.view, this.pos, value);
+        this.pos += 8;
+    }
+    writeBigUint64(value) {
+        this.ensureBufferSizeToWrite(8);
+        this.view.setBigUint64(this.pos, value);
+        this.pos += 8;
+    }
+    writeBigInt64(value) {
+        this.ensureBufferSizeToWrite(8);
+        this.view.setBigInt64(this.pos, value);
+        this.pos += 8;
+    }
+}
+exports.Encoder = Encoder;
+
+},{"./ExtensionCodec":21,"./utils/int":27,"./utils/typedArrays":30,"./utils/utf8":31}],20:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ExtData = void 0;
+/**
+ * ExtData is used to handle Extension Types that are not registered to ExtensionCodec.
+ */
+class ExtData {
+    constructor(type, data) {
+        this.type = type;
+        this.data = data;
+    }
+}
+exports.ExtData = ExtData;
+
+},{}],21:[function(require,module,exports){
+"use strict";
+// ExtensionCodec to handle MessagePack extensions
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ExtensionCodec = void 0;
+const ExtData_1 = require("./ExtData");
+const timestamp_1 = require("./timestamp");
+class ExtensionCodec {
+    constructor() {
+        // built-in extensions
+        this.builtInEncoders = [];
+        this.builtInDecoders = [];
+        // custom extensions
+        this.encoders = [];
+        this.decoders = [];
+        this.register(timestamp_1.timestampExtension);
+    }
+    register({ type, encode, decode, }) {
+        if (type >= 0) {
+            // custom extensions
+            this.encoders[type] = encode;
+            this.decoders[type] = decode;
+        }
+        else {
+            // built-in extensions
+            const index = 1 + type;
+            this.builtInEncoders[index] = encode;
+            this.builtInDecoders[index] = decode;
+        }
+    }
+    tryToEncode(object, context) {
+        // built-in extensions
+        for (let i = 0; i < this.builtInEncoders.length; i++) {
+            const encodeExt = this.builtInEncoders[i];
+            if (encodeExt != null) {
+                const data = encodeExt(object, context);
+                if (data != null) {
+                    const type = -1 - i;
+                    return new ExtData_1.ExtData(type, data);
+                }
+            }
+        }
+        // custom extensions
+        for (let i = 0; i < this.encoders.length; i++) {
+            const encodeExt = this.encoders[i];
+            if (encodeExt != null) {
+                const data = encodeExt(object, context);
+                if (data != null) {
+                    const type = i;
+                    return new ExtData_1.ExtData(type, data);
+                }
+            }
+        }
+        if (object instanceof ExtData_1.ExtData) {
+            // to keep ExtData as is
+            return object;
+        }
+        return null;
+    }
+    decode(data, type, context) {
+        const decodeExt = type < 0 ? this.builtInDecoders[-1 - type] : this.decoders[type];
+        if (decodeExt) {
+            return decodeExt(data, type, context);
+        }
+        else {
+            // decode() does not fail, returns ExtData instead.
+            return new ExtData_1.ExtData(type, data);
+        }
+    }
+}
+ExtensionCodec.defaultCodec = new ExtensionCodec();
+exports.ExtensionCodec = ExtensionCodec;
+
+},{"./ExtData":20,"./timestamp":26}],22:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.decodeMulti = exports.decode = exports.defaultDecodeOptions = void 0;
+const Decoder_1 = require("./Decoder");
+/**
+ * @deprecated No longer supported.
+ */
+exports.defaultDecodeOptions = undefined;
+/**
+ * It decodes a single MessagePack object in a buffer.
+ *
+ * This is a synchronous decoding function.
+ * See other variants for asynchronous decoding: {@link decodeAsync()}, {@link decodeStream()}, or {@link decodeArrayStream()}.
+ *
+ * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
+ * @throws {@link DecodeError} if the buffer contains invalid data.
+ */
+function decode(buffer, options) {
+    const decoder = new Decoder_1.Decoder(options);
+    return decoder.decode(buffer);
+}
+exports.decode = decode;
+/**
+ * It decodes multiple MessagePack objects in a buffer.
+ * This is corresponding to {@link decodeMultiStream()}.
+ *
+ * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
+ * @throws {@link DecodeError} if the buffer contains invalid data.
+ */
+function decodeMulti(buffer, options) {
+    const decoder = new Decoder_1.Decoder(options);
+    return decoder.decodeMulti(buffer);
+}
+exports.decodeMulti = decodeMulti;
+
+},{"./Decoder":18}],23:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.decodeStream = exports.decodeMultiStream = exports.decodeArrayStream = exports.decodeAsync = void 0;
+const Decoder_1 = require("./Decoder");
+const stream_1 = require("./utils/stream");
+/**
+ * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
+ * @throws {@link DecodeError} if the buffer contains invalid data.
+ */
+async function decodeAsync(streamLike, options) {
+    const stream = (0, stream_1.ensureAsyncIterable)(streamLike);
+    const decoder = new Decoder_1.Decoder(options);
+    return decoder.decodeAsync(stream);
+}
+exports.decodeAsync = decodeAsync;
+/**
+ * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
+ * @throws {@link DecodeError} if the buffer contains invalid data.
+ */
+function decodeArrayStream(streamLike, options) {
+    const stream = (0, stream_1.ensureAsyncIterable)(streamLike);
+    const decoder = new Decoder_1.Decoder(options);
+    return decoder.decodeArrayStream(stream);
+}
+exports.decodeArrayStream = decodeArrayStream;
+/**
+ * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
+ * @throws {@link DecodeError} if the buffer contains invalid data.
+ */
+function decodeMultiStream(streamLike, options) {
+    const stream = (0, stream_1.ensureAsyncIterable)(streamLike);
+    const decoder = new Decoder_1.Decoder(options);
+    return decoder.decodeStream(stream);
+}
+exports.decodeMultiStream = decodeMultiStream;
+/**
+ * @deprecated Use {@link decodeMultiStream()} instead.
+ */
+exports.decodeStream = undefined;
+
+},{"./Decoder":18,"./utils/stream":29}],24:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.encode = exports.defaultEncodeOptions = void 0;
+const Encoder_1 = require("./Encoder");
+/**
+ * @deprecated No longer supported.
+ */
+exports.defaultEncodeOptions = undefined;
+/**
+ * It encodes `value` in the MessagePack format and
+ * returns a byte buffer.
+ *
+ * The returned buffer is a slice of a larger `ArrayBuffer`, so you have to use its `#byteOffset` and `#byteLength` in order to convert it to another typed arrays including NodeJS `Buffer`.
+ */
+function encode(value, options) {
+    const encoder = new Encoder_1.Encoder(options);
+    return encoder.encodeSharedRef(value);
+}
+exports.encode = encode;
+
+},{"./Encoder":19}],25:[function(require,module,exports){
+"use strict";
+// Main Functions:
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.decodeTimestampExtension = exports.encodeTimestampExtension = exports.decodeTimestampToTimeSpec = exports.encodeTimeSpecToTimestamp = exports.encodeDateToTimeSpec = exports.EXT_TIMESTAMP = exports.ExtData = exports.ExtensionCodec = exports.Encoder = exports.DecodeError = exports.DataViewIndexOutOfBoundsError = exports.Decoder = exports.decodeStream = exports.decodeMultiStream = exports.decodeArrayStream = exports.decodeAsync = exports.decodeMulti = exports.decode = exports.encode = void 0;
+const encode_1 = require("./encode");
+Object.defineProperty(exports, "encode", { enumerable: true, get: function () { return encode_1.encode; } });
+const decode_1 = require("./decode");
+Object.defineProperty(exports, "decode", { enumerable: true, get: function () { return decode_1.decode; } });
+Object.defineProperty(exports, "decodeMulti", { enumerable: true, get: function () { return decode_1.decodeMulti; } });
+const decodeAsync_1 = require("./decodeAsync");
+Object.defineProperty(exports, "decodeAsync", { enumerable: true, get: function () { return decodeAsync_1.decodeAsync; } });
+Object.defineProperty(exports, "decodeArrayStream", { enumerable: true, get: function () { return decodeAsync_1.decodeArrayStream; } });
+Object.defineProperty(exports, "decodeMultiStream", { enumerable: true, get: function () { return decodeAsync_1.decodeMultiStream; } });
+Object.defineProperty(exports, "decodeStream", { enumerable: true, get: function () { return decodeAsync_1.decodeStream; } });
+const Decoder_1 = require("./Decoder");
+Object.defineProperty(exports, "Decoder", { enumerable: true, get: function () { return Decoder_1.Decoder; } });
+Object.defineProperty(exports, "DataViewIndexOutOfBoundsError", { enumerable: true, get: function () { return Decoder_1.DataViewIndexOutOfBoundsError; } });
+const DecodeError_1 = require("./DecodeError");
+Object.defineProperty(exports, "DecodeError", { enumerable: true, get: function () { return DecodeError_1.DecodeError; } });
+const Encoder_1 = require("./Encoder");
+Object.defineProperty(exports, "Encoder", { enumerable: true, get: function () { return Encoder_1.Encoder; } });
+// Utilities for Extension Types:
+const ExtensionCodec_1 = require("./ExtensionCodec");
+Object.defineProperty(exports, "ExtensionCodec", { enumerable: true, get: function () { return ExtensionCodec_1.ExtensionCodec; } });
+const ExtData_1 = require("./ExtData");
+Object.defineProperty(exports, "ExtData", { enumerable: true, get: function () { return ExtData_1.ExtData; } });
+const timestamp_1 = require("./timestamp");
+Object.defineProperty(exports, "EXT_TIMESTAMP", { enumerable: true, get: function () { return timestamp_1.EXT_TIMESTAMP; } });
+Object.defineProperty(exports, "encodeDateToTimeSpec", { enumerable: true, get: function () { return timestamp_1.encodeDateToTimeSpec; } });
+Object.defineProperty(exports, "encodeTimeSpecToTimestamp", { enumerable: true, get: function () { return timestamp_1.encodeTimeSpecToTimestamp; } });
+Object.defineProperty(exports, "decodeTimestampToTimeSpec", { enumerable: true, get: function () { return timestamp_1.decodeTimestampToTimeSpec; } });
+Object.defineProperty(exports, "encodeTimestampExtension", { enumerable: true, get: function () { return timestamp_1.encodeTimestampExtension; } });
+Object.defineProperty(exports, "decodeTimestampExtension", { enumerable: true, get: function () { return timestamp_1.decodeTimestampExtension; } });
+
+},{"./DecodeError":17,"./Decoder":18,"./Encoder":19,"./ExtData":20,"./ExtensionCodec":21,"./decode":22,"./decodeAsync":23,"./encode":24,"./timestamp":26}],26:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.timestampExtension = exports.decodeTimestampExtension = exports.decodeTimestampToTimeSpec = exports.encodeTimestampExtension = exports.encodeDateToTimeSpec = exports.encodeTimeSpecToTimestamp = exports.EXT_TIMESTAMP = void 0;
+// https://github.com/msgpack/msgpack/blob/master/spec.md#timestamp-extension-type
+const DecodeError_1 = require("./DecodeError");
+const int_1 = require("./utils/int");
+exports.EXT_TIMESTAMP = -1;
+const TIMESTAMP32_MAX_SEC = 0x100000000 - 1; // 32-bit unsigned int
+const TIMESTAMP64_MAX_SEC = 0x400000000 - 1; // 34-bit unsigned int
+function encodeTimeSpecToTimestamp({ sec, nsec }) {
+    if (sec >= 0 && nsec >= 0 && sec <= TIMESTAMP64_MAX_SEC) {
+        // Here sec >= 0 && nsec >= 0
+        if (nsec === 0 && sec <= TIMESTAMP32_MAX_SEC) {
+            // timestamp 32 = { sec32 (unsigned) }
+            const rv = new Uint8Array(4);
+            const view = new DataView(rv.buffer);
+            view.setUint32(0, sec);
+            return rv;
+        }
+        else {
+            // timestamp 64 = { nsec30 (unsigned), sec34 (unsigned) }
+            const secHigh = sec / 0x100000000;
+            const secLow = sec & 0xffffffff;
+            const rv = new Uint8Array(8);
+            const view = new DataView(rv.buffer);
+            // nsec30 | secHigh2
+            view.setUint32(0, (nsec << 2) | (secHigh & 0x3));
+            // secLow32
+            view.setUint32(4, secLow);
+            return rv;
+        }
+    }
+    else {
+        // timestamp 96 = { nsec32 (unsigned), sec64 (signed) }
+        const rv = new Uint8Array(12);
+        const view = new DataView(rv.buffer);
+        view.setUint32(0, nsec);
+        (0, int_1.setInt64)(view, 4, sec);
+        return rv;
+    }
+}
+exports.encodeTimeSpecToTimestamp = encodeTimeSpecToTimestamp;
+function encodeDateToTimeSpec(date) {
+    const msec = date.getTime();
+    const sec = Math.floor(msec / 1e3);
+    const nsec = (msec - sec * 1e3) * 1e6;
+    // Normalizes { sec, nsec } to ensure nsec is unsigned.
+    const nsecInSec = Math.floor(nsec / 1e9);
+    return {
+        sec: sec + nsecInSec,
+        nsec: nsec - nsecInSec * 1e9,
+    };
+}
+exports.encodeDateToTimeSpec = encodeDateToTimeSpec;
+function encodeTimestampExtension(object) {
+    if (object instanceof Date) {
+        const timeSpec = encodeDateToTimeSpec(object);
+        return encodeTimeSpecToTimestamp(timeSpec);
+    }
+    else {
+        return null;
+    }
+}
+exports.encodeTimestampExtension = encodeTimestampExtension;
+function decodeTimestampToTimeSpec(data) {
+    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    // data may be 32, 64, or 96 bits
+    switch (data.byteLength) {
+        case 4: {
+            // timestamp 32 = { sec32 }
+            const sec = view.getUint32(0);
+            const nsec = 0;
+            return { sec, nsec };
+        }
+        case 8: {
+            // timestamp 64 = { nsec30, sec34 }
+            const nsec30AndSecHigh2 = view.getUint32(0);
+            const secLow32 = view.getUint32(4);
+            const sec = (nsec30AndSecHigh2 & 0x3) * 0x100000000 + secLow32;
+            const nsec = nsec30AndSecHigh2 >>> 2;
+            return { sec, nsec };
+        }
+        case 12: {
+            // timestamp 96 = { nsec32 (unsigned), sec64 (signed) }
+            const sec = (0, int_1.getInt64)(view, 4);
+            const nsec = view.getUint32(0);
+            return { sec, nsec };
+        }
+        default:
+            throw new DecodeError_1.DecodeError(`Unrecognized data size for timestamp (expected 4, 8, or 12): ${data.length}`);
+    }
+}
+exports.decodeTimestampToTimeSpec = decodeTimestampToTimeSpec;
+function decodeTimestampExtension(data) {
+    const timeSpec = decodeTimestampToTimeSpec(data);
+    return new Date(timeSpec.sec * 1e3 + timeSpec.nsec / 1e6);
+}
+exports.decodeTimestampExtension = decodeTimestampExtension;
+exports.timestampExtension = {
+    type: exports.EXT_TIMESTAMP,
+    encode: encodeTimestampExtension,
+    decode: decodeTimestampExtension,
+};
+
+},{"./DecodeError":17,"./utils/int":27}],27:[function(require,module,exports){
+"use strict";
+// Integer Utility
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getUint64 = exports.getInt64 = exports.setInt64 = exports.setUint64 = exports.UINT32_MAX = void 0;
+exports.UINT32_MAX = 4294967295;
+// DataView extension to handle int64 / uint64,
+// where the actual range is 53-bits integer (a.k.a. safe integer)
+function setUint64(view, offset, value) {
+    const high = value / 4294967296;
+    const low = value; // high bits are truncated by DataView
+    view.setUint32(offset, high);
+    view.setUint32(offset + 4, low);
+}
+exports.setUint64 = setUint64;
+function setInt64(view, offset, value) {
+    const high = Math.floor(value / 4294967296);
+    const low = value; // high bits are truncated by DataView
+    view.setUint32(offset, high);
+    view.setUint32(offset + 4, low);
+}
+exports.setInt64 = setInt64;
+function getInt64(view, offset) {
+    const high = view.getInt32(offset);
+    const low = view.getUint32(offset + 4);
+    return high * 4294967296 + low;
+}
+exports.getInt64 = getInt64;
+function getUint64(view, offset) {
+    const high = view.getUint32(offset);
+    const low = view.getUint32(offset + 4);
+    return high * 4294967296 + low;
+}
+exports.getUint64 = getUint64;
+
+},{}],28:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.prettyByte = void 0;
+function prettyByte(byte) {
+    return `${byte < 0 ? "-" : ""}0x${Math.abs(byte).toString(16).padStart(2, "0")}`;
+}
+exports.prettyByte = prettyByte;
+
+},{}],29:[function(require,module,exports){
+"use strict";
+// utility for whatwg streams
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ensureAsyncIterable = exports.asyncIterableFromStream = exports.isAsyncIterable = void 0;
+function isAsyncIterable(object) {
+    return object[Symbol.asyncIterator] != null;
+}
+exports.isAsyncIterable = isAsyncIterable;
+function assertNonNull(value) {
+    if (value == null) {
+        throw new Error("Assertion Failure: value must not be null nor undefined");
+    }
+}
+async function* asyncIterableFromStream(stream) {
+    const reader = stream.getReader();
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                return;
+            }
+            assertNonNull(value);
+            yield value;
+        }
+    }
+    finally {
+        reader.releaseLock();
+    }
+}
+exports.asyncIterableFromStream = asyncIterableFromStream;
+function ensureAsyncIterable(streamLike) {
+    if (isAsyncIterable(streamLike)) {
+        return streamLike;
+    }
+    else {
+        return asyncIterableFromStream(streamLike);
+    }
+}
+exports.ensureAsyncIterable = ensureAsyncIterable;
+
+},{}],30:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createDataView = exports.ensureUint8Array = void 0;
+function ensureUint8Array(buffer) {
+    if (buffer instanceof Uint8Array) {
+        return buffer;
+    }
+    else if (ArrayBuffer.isView(buffer)) {
+        return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    }
+    else if (buffer instanceof ArrayBuffer) {
+        return new Uint8Array(buffer);
+    }
+    else {
+        // ArrayLike<number>
+        return Uint8Array.from(buffer);
+    }
+}
+exports.ensureUint8Array = ensureUint8Array;
+function createDataView(buffer) {
+    if (buffer instanceof ArrayBuffer) {
+        return new DataView(buffer);
+    }
+    const bufferView = ensureUint8Array(buffer);
+    return new DataView(bufferView.buffer, bufferView.byteOffset, bufferView.byteLength);
+}
+exports.createDataView = createDataView;
+
+},{}],31:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.utf8Decode = exports.utf8DecodeTD = exports.utf8DecodeJs = exports.utf8Encode = exports.utf8EncodeTE = exports.utf8EncodeJs = exports.utf8Count = void 0;
+function utf8Count(str) {
+    const strLength = str.length;
+    let byteLength = 0;
+    let pos = 0;
+    while (pos < strLength) {
+        let value = str.charCodeAt(pos++);
+        if ((value & 0xffffff80) === 0) {
+            // 1-byte
+            byteLength++;
+            continue;
+        }
+        else if ((value & 0xfffff800) === 0) {
+            // 2-bytes
+            byteLength += 2;
+        }
+        else {
+            // handle surrogate pair
+            if (value >= 0xd800 && value <= 0xdbff) {
+                // high surrogate
+                if (pos < strLength) {
+                    const extra = str.charCodeAt(pos);
+                    if ((extra & 0xfc00) === 0xdc00) {
+                        ++pos;
+                        value = ((value & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000;
+                    }
+                }
+            }
+            if ((value & 0xffff0000) === 0) {
+                // 3-byte
+                byteLength += 3;
+            }
+            else {
+                // 4-byte
+                byteLength += 4;
+            }
+        }
+    }
+    return byteLength;
+}
+exports.utf8Count = utf8Count;
+function utf8EncodeJs(str, output, outputOffset) {
+    const strLength = str.length;
+    let offset = outputOffset;
+    let pos = 0;
+    while (pos < strLength) {
+        let value = str.charCodeAt(pos++);
+        if ((value & 0xffffff80) === 0) {
+            // 1-byte
+            output[offset++] = value;
+            continue;
+        }
+        else if ((value & 0xfffff800) === 0) {
+            // 2-bytes
+            output[offset++] = ((value >> 6) & 0x1f) | 0xc0;
+        }
+        else {
+            // handle surrogate pair
+            if (value >= 0xd800 && value <= 0xdbff) {
+                // high surrogate
+                if (pos < strLength) {
+                    const extra = str.charCodeAt(pos);
+                    if ((extra & 0xfc00) === 0xdc00) {
+                        ++pos;
+                        value = ((value & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000;
+                    }
+                }
+            }
+            if ((value & 0xffff0000) === 0) {
+                // 3-byte
+                output[offset++] = ((value >> 12) & 0x0f) | 0xe0;
+                output[offset++] = ((value >> 6) & 0x3f) | 0x80;
+            }
+            else {
+                // 4-byte
+                output[offset++] = ((value >> 18) & 0x07) | 0xf0;
+                output[offset++] = ((value >> 12) & 0x3f) | 0x80;
+                output[offset++] = ((value >> 6) & 0x3f) | 0x80;
+            }
+        }
+        output[offset++] = (value & 0x3f) | 0x80;
+    }
+}
+exports.utf8EncodeJs = utf8EncodeJs;
+// TextEncoder and TextDecoder are standardized in whatwg encoding:
+// https://encoding.spec.whatwg.org/
+// and available in all the modern browsers:
+// https://caniuse.com/textencoder
+// They are available in Node.js since v12 LTS as well:
+// https://nodejs.org/api/globals.html#textencoder
+const sharedTextEncoder = new TextEncoder();
+// This threshold should be determined by benchmarking, which might vary in engines and input data.
+// Run `npx ts-node benchmark/encode-string.ts` for details.
+const TEXT_ENCODER_THRESHOLD = 50;
+function utf8EncodeTE(str, output, outputOffset) {
+    sharedTextEncoder.encodeInto(str, output.subarray(outputOffset));
+}
+exports.utf8EncodeTE = utf8EncodeTE;
+function utf8Encode(str, output, outputOffset) {
+    if (str.length > TEXT_ENCODER_THRESHOLD) {
+        utf8EncodeTE(str, output, outputOffset);
+    }
+    else {
+        utf8EncodeJs(str, output, outputOffset);
+    }
+}
+exports.utf8Encode = utf8Encode;
+const CHUNK_SIZE = 4096;
+function utf8DecodeJs(bytes, inputOffset, byteLength) {
+    let offset = inputOffset;
+    const end = offset + byteLength;
+    const units = [];
+    let result = "";
+    while (offset < end) {
+        const byte1 = bytes[offset++];
+        if ((byte1 & 0x80) === 0) {
+            // 1 byte
+            units.push(byte1);
+        }
+        else if ((byte1 & 0xe0) === 0xc0) {
+            // 2 bytes
+            const byte2 = bytes[offset++] & 0x3f;
+            units.push(((byte1 & 0x1f) << 6) | byte2);
+        }
+        else if ((byte1 & 0xf0) === 0xe0) {
+            // 3 bytes
+            const byte2 = bytes[offset++] & 0x3f;
+            const byte3 = bytes[offset++] & 0x3f;
+            units.push(((byte1 & 0x1f) << 12) | (byte2 << 6) | byte3);
+        }
+        else if ((byte1 & 0xf8) === 0xf0) {
+            // 4 bytes
+            const byte2 = bytes[offset++] & 0x3f;
+            const byte3 = bytes[offset++] & 0x3f;
+            const byte4 = bytes[offset++] & 0x3f;
+            let unit = ((byte1 & 0x07) << 0x12) | (byte2 << 0x0c) | (byte3 << 0x06) | byte4;
+            if (unit > 0xffff) {
+                unit -= 0x10000;
+                units.push(((unit >>> 10) & 0x3ff) | 0xd800);
+                unit = 0xdc00 | (unit & 0x3ff);
+            }
+            units.push(unit);
+        }
+        else {
+            units.push(byte1);
+        }
+        if (units.length >= CHUNK_SIZE) {
+            result += String.fromCharCode(...units);
+            units.length = 0;
+        }
+    }
+    if (units.length > 0) {
+        result += String.fromCharCode(...units);
+    }
+    return result;
+}
+exports.utf8DecodeJs = utf8DecodeJs;
+const sharedTextDecoder = new TextDecoder();
+// This threshold should be determined by benchmarking, which might vary in engines and input data.
+// Run `npx ts-node benchmark/decode-string.ts` for details.
+const TEXT_DECODER_THRESHOLD = 200;
+function utf8DecodeTD(bytes, inputOffset, byteLength) {
+    const stringBytes = bytes.subarray(inputOffset, inputOffset + byteLength);
+    return sharedTextDecoder.decode(stringBytes);
+}
+exports.utf8DecodeTD = utf8DecodeTD;
+function utf8Decode(bytes, inputOffset, byteLength) {
+    if (byteLength > TEXT_DECODER_THRESHOLD) {
+        return utf8DecodeTD(bytes, inputOffset, byteLength);
+    }
+    else {
+        return utf8DecodeJs(bytes, inputOffset, byteLength);
+    }
+}
+exports.utf8Decode = utf8Decode;
+
+},{}],32:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -1220,7 +3043,7 @@ if ('undefined' !== typeof module) {
   module.exports = EventEmitter;
 }
 
-},{}],16:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /**
  * Copyright (c) 2014-present, Facebook, Inc.
  *
@@ -1969,672 +3792,6 @@ try {
   // problems, please detail your unique predicament in a GitHub issue.
   Function("r", "regeneratorRuntime = r")(runtime);
 }
-
-},{}],17:[function(require,module,exports){
-'use strict';
-var BufferUtil = require('./lib/buffer-util');
-var decoder = new TextDecoder;
-var encoder = new TextEncoder;
-
-BufferUtil.toString = function (buffer, start, end) {
-	return decoder.decode(BufferUtil.subarray(buffer, start, end));
-};
-BufferUtil.fromString = function (string) {
-	return encoder.encode(string);
-};
-
-module.exports = require('./lib/msgpack');
-
-},{"./lib/buffer-util":18,"./lib/msgpack":22}],18:[function(require,module,exports){
-'use strict';
-
-// The given argument must be an array of Uint8Arrays.
-exports.concat = function (buffers) {
-	var bufferCount = buffers.length;
-	var totalLength = 0;
-	for (var i=0; i<bufferCount; ++i) {
-		totalLength += buffers[i].byteLength;
-	}
-	var output = new Uint8Array(totalLength);
-	var offset = 0;
-	for (var i=0; i<bufferCount; ++i) {
-		var buffer = buffers[i];
-		output.set(buffer, offset);
-		offset += buffer.byteLength;
-	}
-	return output;
-};
-
-// The first argument must be a Uint8Array.
-// Start and end indices will be clamped to the range of the given Uint8Array.
-exports.subarray = function (buffer, start, end) {
-	start = Math.min(Math.max(0, start), buffer.byteLength);
-	return new Uint8Array(buffer.buffer,
-		buffer.byteOffset + start,
-		Math.min(Math.max(start, end), buffer.byteLength) - start
-	);
-};
-
-},{}],19:[function(require,module,exports){
-'use strict';
-function Codec() {
-	if (!(this instanceof Codec)) {
-		throw new TypeError('Codecs must be constructed with the "new" keyword.');
-	}
-	this._packers = [];
-	this._packerClasses = [];
-	this._unpackers = {};
-}
-Codec.prototype.register = function (etype, Class, packer, unpacker) {
-	if (Array.isArray(packer)) {
-		packer = join(packer);
-	}
-	if (Array.isArray(unpacker)) {
-		unpacker = join(unpacker);
-	}
-	if (~~etype !== etype || !(etype >= 0 && etype < 128)) {
-		throw new TypeError('Invalid extension type (must be between 0 and 127).');
-	}
-	if (typeof Class !== 'function') {
-		throw new TypeError('Expected second argument to be a constructor function.');
-	}
-	this._packers.push(function (value) {
-		var buffer = packer(value);
-		if (!(buffer instanceof Uint8Array)) {
-			throw new TypeError('Codec must return a Uint8Array (encoding "' + Class.name + '").');
-		}
-		return new ExtensionBuffer(buffer, etype);
-	});
-	this._packerClasses.push(Class);
-	this._unpackers[etype] = unpacker;
-	return this;
-};
-Codec.prototype._packerFor = function (value) {
-	return getPacker(value.constructor, this._packerClasses, this._packers);
-};
-Codec.prototype._unpackerFor = function (etype) {
-	return this._unpackers[etype];
-};
-module.exports = Codec;
-
-// This is isolated for optimization purposes.
-var getPacker = function (constructor, classes, packers) {
-	for (var i=0, len=classes.length; i<len; ++i) {
-		if (constructor === classes[i]) {
-			return packers[i];
-		}
-	}
-};
-
-var join = function (filters) {
-	filters = filters.slice();
-	var iterator = function (value, filter) {
-		return filter(value);
-	};
-	return function (value) {
-		return filters.reduce(iterator, value);
-	};
-};
-
-var ExtensionBuffer = function (buffer, etype) {
-	this.buffer = buffer;
-	this.etype = etype;
-};
-
-},{}],20:[function(require,module,exports){
-'use strict';
-module.exports = function (decoder) {
-	var type = readUint8(decoder);
-	var func = readToken[type];
-	if (!func) {
-		throw new Error('Invalid type: ' + (type ? ('0x' + type.toString(16)) : type));
-	}
-	return func(decoder);
-};
-
-// Dependencies are loaded after exporting, to satisfy the required load order.
-var readUint8 = require('./read-format').uint8;
-var readToken = new Array(256);
-
-// Fills the readToken array with functions that each return their decoded
-// interpretation of the bytes at the given Paper's offset.
-(function (read) {
-	var i;
-	
-	// Creates a readToken function that returns a constant value.
-	var constant = function (value) {
-		return function () {
-			return value;
-		};
-	};
-	
-	// Transforms the given method to always receive a second argument, which is
-	// a number constant.
-	var fix = function (len, method) {
-		return function (decoder) {
-			return method(decoder, len);
-		};
-	};
-	
-	// Transforms the given method to always receive a second argument, which is
-	// a number returned by lenFunc when given a Paper.
-	var flex = function (lenFunc, method) {
-		return function (decoder) {
-			return method(decoder, lenFunc(decoder));
-		};
-	};
-	
-	// positive fixint -- 0x00 - 0x7f
-	for (i=0x00; i<=0x7f; ++i) {
-		readToken[i] = constant(i);
-	}
-	
-	// fixmap -- 0x80 - 0x8f
-	for (i=0x80; i<=0x8f; ++i) {
-		readToken[i] = fix(i - 0x80, read.map);
-	}
-	
-	// fixarray -- 0x90 - 0x9f
-	for (i=0x90; i<=0x9f; ++i) {
-		readToken[i] = fix(i - 0x90, read.array);
-	}
-	
-	// fixstr -- 0xa0 - 0xbf
-	for (i=0xa0; i<=0xbf; ++i) {
-		readToken[i] = fix(i - 0xa0, read.str);
-	}
-	
-	// nil -- 0xc0
-	readToken[0xc0] = constant(null);
-	
-	// (never used) -- 0xc1
-	readToken[0xc1] = null;
-	
-	// false -- 0xc2
-	// true -- 0xc3
-	readToken[0xc2] = constant(false);
-	readToken[0xc3] = constant(true);
-	
-	// bin 8 -- 0xc4
-	// bin 16 -- 0xc5
-	// bin 32 -- 0xc6
-	readToken[0xc4] = flex(read.uint8, read.bin);
-	readToken[0xc5] = flex(read.uint16, read.bin);
-	readToken[0xc6] = flex(read.uint32, read.bin);
-	
-	// ext 8 -- 0xc7
-	// ext 16 -- 0xc8
-	// ext 32 -- 0xc9
-	readToken[0xc7] = flex(read.uint8, read.ext);
-	readToken[0xc8] = flex(read.uint16, read.ext);
-	readToken[0xc9] = flex(read.uint32, read.ext);
-	
-	// float 32 -- 0xca
-	// float 64 -- 0xcb
-	readToken[0xca] = read.float32;
-	readToken[0xcb] = read.float64;
-	
-	// uint 8 -- 0xcc
-	// uint 16 -- 0xcd
-	// uint 32 -- 0xce
-	// uint 64 -- 0xcf
-	readToken[0xcc] = read.uint8;
-	readToken[0xcd] = read.uint16;
-	readToken[0xce] = read.uint32;
-	readToken[0xcf] = null;
-	
-	// int 8 -- 0xd0
-	// int 16 -- 0xd1
-	// int 32 -- 0xd2
-	// int 64 -- 0xd3
-	readToken[0xd0] = read.int8;
-	readToken[0xd1] = read.int16;
-	readToken[0xd2] = read.int32;
-	readToken[0xd3] = null;
-	
-	// fixext 1 -- 0xd4
-	// fixext 2 -- 0xd5
-	// fixext 4 -- 0xd6
-	// fixext 8 -- 0xd7
-	// fixext 16 -- 0xd8
-	readToken[0xd4] = fix(1, read.ext);
-	readToken[0xd5] = fix(2, read.ext);
-	readToken[0xd6] = fix(4, read.ext);
-	readToken[0xd7] = fix(8, read.ext);
-	readToken[0xd8] = fix(16, read.ext);
-	
-	// str 8 -- 0xd9
-	// str 16 -- 0xda
-	// str 32 -- 0xdb
-	readToken[0xd9] = flex(read.uint8, read.str);
-	readToken[0xda] = flex(read.uint16, read.str);
-	readToken[0xdb] = flex(read.uint32, read.str);
-	
-	// array 16 -- 0xdc
-	// array 32 -- 0xdd
-	readToken[0xdc] = flex(read.uint16, read.array);
-	readToken[0xdd] = flex(read.uint32, read.array);
-	
-	// map 16 -- 0xde
-	// map 32 -- 0xdf
-	readToken[0xde] = flex(read.uint16, read.map);
-	readToken[0xdf] = flex(read.uint32, read.map);
-	
-	// negative fixint -- 0xe0 - 0xff
-	for (i=0xe0; i<=0xff; ++i) {
-		readToken[i] = constant(i - 0x100);
-	}
-}(require('./read-format')));
-
-},{"./read-format":24}],21:[function(require,module,exports){
-'use strict';
-var writeType = {};
-
-var encode = module.exports = function (encoder, value) {
-	writeType[typeof value](encoder, value);
-};
-
-// Fills the writeType hash with functions that each encode values of their
-// respective types at the given Paper's offset.
-(function (write, fromString) {
-	
-	var float32Buffer = new Float32Array(1);
-	var isFloat32 = function (num) {
-		float32Buffer[0] = num;
-		return float32Buffer[0] === num;
-	};
-	
-	writeType.number = function (encoder, value) {
-		var uivalue = value >>> 0;
-		if (value === uivalue) {
-			// positive fixint -- 0x00 - 0x7f
-			// uint 8 -- 0xcc
-			// uint 16 -- 0xcd
-			// uint 32 -- 0xce
-			uivalue <= 0x7f ? write.type(encoder, uivalue) :
-			uivalue <= 0xff ? write.int8(encoder, 0xcc, uivalue) :
-			uivalue <= 0xffff ? write.int16(encoder, 0xcd, uivalue) :
-			write.int32(encoder, 0xce, uivalue);
-		} else {
-			var ivalue = value | 0;
-			if (value === ivalue) {
-				// negative fixint -- 0xe0 - 0xff
-				// int 8 -- 0xd0
-				// int 16 -- 0xd1
-				// int 32 -- 0xd2
-				ivalue >= -0x20 ? write.type(encoder, ivalue & 0xff) :
-				ivalue >= -0x80 ? write.int8(encoder, 0xd0, ivalue) :
-				ivalue >= -0x8000 ? write.int16(encoder, 0xd1, ivalue) :
-				write.int32(encoder, 0xd2, ivalue);
-			} else {
-				isFloat32(value)
-					? write.float32(encoder, value)  // float 32 -- 0xca
-					: write.float64(encoder, value); // float 64 -- 0xcb
-			}
-		}
-	};
-	
-	writeType.string = function (encoder, value) {
-		var utf8 = fromString(value);
-		var byteLength = utf8.byteLength;
-		
-		// fixstr -- 0xa0 - 0xbf
-		// str 8 -- 0xd9
-		// str 16 -- 0xda
-		// str 32 -- 0xdb
-		byteLength < 32 ? write.type(encoder, 0xa0 + byteLength) :
-		byteLength <= 0xff ? write.int8(encoder, 0xd9, byteLength) :
-		byteLength <= 0xffff ? write.int16(encoder, 0xda, byteLength) :
-		write.int32(encoder, 0xdb, byteLength);
-		
-		encoder.send(utf8);
-	};
-	
-	writeType.boolean = function (encoder, value) {
-		// false -- 0xc2
-		// true -- 0xc3
-		write.type(encoder, value ? 0xc3 : 0xc2);
-	};
-	
-	writeType.object = function (encoder, value) {
-		var packer;
-		if (value === null) return nil(encoder, value);
-		if (Array.isArray(value)) return array(encoder, value);
-		if (value instanceof Uint8Array) return bin(encoder, value);
-		if (encoder.codec && (packer = encoder.codec._packerFor(value))) {
-			return ext(encoder, packer(value));
-		}
-		map(encoder, value);
-	};
-	
-	var nil = function (encoder) {
-		// nil -- 0xc0
-		write.type(encoder, 0xc0);
-	};
-	
-	var array = function (encoder, value) {
-		var length = value.length;
-		
-		// fixarray -- 0x90 - 0x9f
-		// array 16 -- 0xdc
-		// array 32 -- 0xdd
-		length < 16 ? write.type(encoder, 0x90 + length) :
-		length <= 0xffff ? write.int16(encoder, 0xdc, length) :
-		write.int32(encoder, 0xdd, length);
-		
-		for (var i=0; i<length; ++i) {
-			encode(encoder, value[i]);
-		}
-	};
-	
-	var bin = function (encoder, value) {
-		var byteLength = value.byteLength;
-		
-		// bin 8 -- 0xc4
-		// bin 16 -- 0xc5
-		// bin 32 -- 0xc6
-		byteLength <= 0xff ? write.int8(encoder, 0xc4, byteLength) :
-		byteLength <= 0xffff ? write.int16(encoder, 0xc5, byteLength) :
-		write.int32(encoder, 0xc6, byteLength);
-		
-		encoder.send(value);
-	};
-	
-	var ext = function (encoder, value) {
-		var byteLength = value.buffer.byteLength;
-		
-		// fixext 1 -- 0xd4
-		// fixext 2 -- 0xd5
-		// fixext 4 -- 0xd6
-		// fixext 8 -- 0xd7
-		// fixext 16 -- 0xd8
-		// ext 8 -- 0xc7
-		// ext 16 -- 0xc8
-		// ext 32 -- 0xc9
-		byteLength === 1 ? write.int8(encoder, 0xd4, value.etype) :
-		byteLength === 2 ? write.int8(encoder, 0xd5, value.etype) :
-		byteLength === 4 ? write.int8(encoder, 0xd6, value.etype) :
-		byteLength === 8 ? write.int8(encoder, 0xd7, value.etype) :
-		byteLength === 16 ? write.int8(encoder, 0xd8, value.etype) :
-		byteLength <= 0xff ? (write.int8(encoder, 0xc7, byteLength), write.type(encoder, value.etype)) :
-		byteLength <= 0xffff ? (write.int16(encoder, 0xc8, byteLength), write.type(encoder, value.etype)) :
-		(write.int32(encoder, 0xc9, byteLength), write.type(encoder, value.etype));
-		
-		encoder.send(value.buffer);
-	};
-	
-	var map = function (encoder, value) {
-		var keys = Object.keys(value);
-		var length = keys.length;
-		
-		// fixmap -- 0x80 - 0x8f
-		// map 16 -- 0xde
-		// map 32 -- 0xdf
-		length < 16 ? write.type(encoder, 0x80 + length) :
-		length <= 0xffff ? write.int16(encoder, 0xde, length) :
-		write.int32(encoder, 0xdf, length);
-		
-		for (var i=0; i<length; ++i) {
-			var key = keys[i];
-			(key >>> 0) + '' === key ? encode(encoder, key >>> 0) : encode(encoder, key);
-			encode(encoder, value[key]);
-		}
-	};
-	
-	writeType.undefined = nil;
-	writeType.function = nil;
-	writeType.symbol = nil;
-}(require('./write-header'), require('./buffer-util').fromString));
-
-},{"./buffer-util":18,"./write-header":25}],22:[function(require,module,exports){
-'use strict';
-var Codec = require('./codec');
-var Paper = require('./paper');
-var encode = require('./encode');
-var decode = require('./decode');
-
-exports.encode = function (input, codec) {
-	if (codec != null && !(codec instanceof Codec)) {
-		throw new TypeError('Expected second argument to be a Codec, if provided.');
-	}
-	var encoder = new Paper(codec);
-	encode(encoder, input);
-	return encoder.read();
-};
-exports.decode = function (input, codec) {
-	if (codec != null && !(codec instanceof Codec)) {
-		throw new TypeError('Expected second argument to be a Codec, if provided.');
-	}
-	if (!(input instanceof Uint8Array)) {
-		throw new TypeError('Expected first argument to be a Uint8Array.');
-	}
-	var decoder = new Paper(codec);
-	decoder.setBuffer(input);
-	return decode(decoder);
-};
-exports.Codec = Codec;
-
-},{"./codec":19,"./decode":20,"./encode":21,"./paper":23}],23:[function(require,module,exports){
-'use strict';
-var BufferUtil = require('./buffer-util');
-var MIN_BUFFER_SIZE = 2048;
-var MAX_BUFFER_SIZE = 65536;
-
-var Paper = function (codec) {
-	this.codec = codec;
-};
-Paper.prototype.push = function (chunk) {
-	var buffers = this.buffers || (this.buffers = []);
-	buffers.push(chunk);
-};
-Paper.prototype.read = function () {
-	this.flush();
-	var buffers = this.buffers;
-	if (buffers) {
-		var chunk = buffers.length > 1 ? BufferUtil.concat(buffers) : buffers[0];
-		buffers.length = 0;
-		return chunk;
-	}
-};
-Paper.prototype.flush = function () {
-	if (this.start < this.offset) {
-		this.push(BufferUtil.subarray(this.buffer, this.start, this.offset));
-		this.start = this.offset;
-	}
-};
-Paper.prototype.reserve = function (length) {
-	if (!this.buffer) {
-		return this.alloc(length);
-	}
-	var size = this.buffer.byteLength;
-	// Does it need to be resized?
-	if (this.offset + length > size) {
-		// Flush current buffer.
-		this.offset && this.flush();
-		// Resize it to 2x current length.
-		this.alloc(Math.max(length, Math.min(size * 2, MAX_BUFFER_SIZE)));
-	}
-};
-Paper.prototype.alloc = function (length) {
-	this.setBuffer(new Uint8Array(Math.max(length, MIN_BUFFER_SIZE)));
-};
-Paper.prototype.setBuffer = function (buffer) {
-	this.buffer = buffer;
-	this.offset = 0;
-	this.start = 0;
-};
-Paper.prototype.send = function (buffer) {
-	var end = this.offset + buffer.byteLength;
-	if (this.buffer && end <= this.buffer.byteLength) {
-		this.buffer.set(buffer, this.offset);
-		this.offset = end;
-	} else {
-		this.flush();
-		this.push(buffer);
-	}
-};
-module.exports = Paper;
-
-},{"./buffer-util":18}],24:[function(require,module,exports){
-'use strict';
-var BufferUtil = require('./buffer-util');
-var decode = require('./decode');
-
-var map = function (decoder, len) {
-	var value = {};
-	for (var i=0; i<len; ++i) {
-		value[decode(decoder)] = decode(decoder);
-	}
-	return value;
-};
-
-var array = function (decoder, len) {
-	var value = new Array(len);
-	for (var i=0; i<len; ++i) {
-		value[i] = decode(decoder);
-	}
-	return value;
-};
-
-var str = function (decoder, len) {
-	var start = decoder.offset;
-	var end = decoder.offset = start + len;
-	if (end > decoder.buffer.byteLength) throw new RangeError('BUFFER_SHORTAGE');
-	return BufferUtil.toString(decoder.buffer, start, end);
-};
-
-var bin = function (decoder, len) {
-	var start = decoder.offset;
-	var end = decoder.offset = start + len;
-	if (end > decoder.buffer.byteLength) throw new RangeError('BUFFER_SHORTAGE');
-	return BufferUtil.subarray(decoder.buffer, start, end);
-};
-
-var ext = function (decoder, len) {
-	var start = decoder.offset;
-	var end = decoder.offset = start + len + 1;
-	if (end > decoder.buffer.byteLength) throw new RangeError('BUFFER_SHORTAGE');
-	var etype = decoder.buffer[start];
-	var unpacker;
-	if (decoder.codec && (unpacker = decoder.codec._unpackerFor(etype))) {
-		return unpacker(BufferUtil.subarray(decoder.buffer, start + 1, end));
-	}
-	throw new Error('Unrecognized extension type: ' + (etype ? ('0x' + etype.toString(16)) : etype));
-};
-
-var uint8 = function (decoder) {
-	var buffer = decoder.buffer;
-	if (decoder.offset >= buffer.byteLength) throw new RangeError('BUFFER_SHORTAGE');
-	return buffer[decoder.offset++];
-};
-
-var uint16 = function (decoder) {
-	var buffer = decoder.buffer;
-	if (decoder.offset + 2 > buffer.byteLength) throw new RangeError('BUFFER_SHORTAGE');
-	return (buffer[decoder.offset++] << 8) | buffer[decoder.offset++];
-};
-
-var uint32 = function (decoder) {
-	var buffer = decoder.buffer;
-	if (decoder.offset + 4 > buffer.byteLength) throw new RangeError('BUFFER_SHORTAGE');
-	return (buffer[decoder.offset++] * 0x1000000) +
-		((buffer[decoder.offset++] << 16) |
-		(buffer[decoder.offset++] << 8) |
-		buffer[decoder.offset++]);
-};
-
-var int8 = function (decoder) {
-	var val = uint8(decoder);
-	return !(val & 0x80) ? val : (0xff - val + 1) * -1;
-};
-
-var int16 = function (decoder) {
-	var val = uint16(decoder);
-	return (val & 0x8000) ? val | 0xFFFF0000 : val;
-};
-
-var int32 = function (decoder) {
-	var buffer = decoder.buffer;
-	if (decoder.offset + 4 > buffer.byteLength) throw new RangeError('BUFFER_SHORTAGE');
-	return (buffer[decoder.offset++] << 24) |
-		(buffer[decoder.offset++] << 16) |
-		(buffer[decoder.offset++] << 8) |
-		buffer[decoder.offset++];
-};
-
-var float32 = function (decoder) {
-	var buffer = decoder.buffer;
-	var offset = decoder.offset;
-	decoder.offset += 4;
-	return new DataView(buffer.buffer).getFloat32(buffer.byteOffset + offset);
-};
-
-var float64 = function (decoder) {
-	var buffer = decoder.buffer;
-	var offset = decoder.offset;
-	decoder.offset += 8;
-	return new DataView(buffer.buffer).getFloat64(buffer.byteOffset + offset);
-};
-
-module.exports = {
-	map: map,
-	array: array,
-	str: str,
-	bin: bin,
-	ext: ext,
-	uint8: uint8,
-	uint16: uint16,
-	uint32: uint32,
-	int8: int8,
-	int16: int16,
-	int32: int32,
-	float32: float32,
-	float64: float64
-};
-
-},{"./buffer-util":18,"./decode":20}],25:[function(require,module,exports){
-'use strict';
-
-exports.type = function (encoder, type) {
-	encoder.reserve(1);
-	encoder.buffer[encoder.offset++] = type;
-};
-exports.int8 = function (encoder, type, value) {
-	encoder.reserve(2);
-	var buffer = encoder.buffer;
-	buffer[encoder.offset++] = type;
-	buffer[encoder.offset++] = value;
-};
-exports.int16 = function (encoder, type, value) {
-	encoder.reserve(3);
-	var buffer = encoder.buffer;
-	buffer[encoder.offset++] = type;
-	buffer[encoder.offset++] = value >>> 8;
-	buffer[encoder.offset++] = value;
-};
-exports.int32 = function (encoder, type, value) {
-	encoder.reserve(5);
-	var buffer = encoder.buffer;
-	buffer[encoder.offset++] = type;
-	buffer[encoder.offset++] = value >>> 24;
-	buffer[encoder.offset++] = value >>> 16;
-	buffer[encoder.offset++] = value >>> 8;
-	buffer[encoder.offset++] = value;
-};
-exports.float32 = function (encoder, value) {
-	encoder.reserve(5);
-	var buffer = encoder.buffer;
-	buffer[encoder.offset++] = 0xca;
-	new DataView(buffer.buffer).setFloat32(buffer.byteOffset + encoder.offset, value);
-	encoder.offset += 4;
-};
-exports.float64 = function (encoder, value) {
-	encoder.reserve(9);
-	var buffer = encoder.buffer;
-	buffer[encoder.offset++] = 0xcb;
-	new DataView(buffer.buffer).setFloat64(buffer.byteOffset + encoder.offset, value);
-	encoder.offset += 8;
-};
 
 },{}]},{},[1])(1)
 });

@@ -16,7 +16,8 @@ import {
     NodeWebSocketType,
     ICommonWebSocketFactory
 } from "./client/client.types"
-import msgpack from "tiny-msgpack"
+// import msgpack from "tiny-msgpack"
+import * as msgpack from "@msgpack/msgpack"
 
 interface IQueueElement {
     promise: [
@@ -236,7 +237,7 @@ export default class CommonClient extends EventEmitter
     async subscribe(event: string | Array<string>)
     {
         if (typeof event === "string")
-            event = [ event ]
+            event = [event]
 
         const result = await this.call("rpc.on", event)
 
@@ -256,7 +257,7 @@ export default class CommonClient extends EventEmitter
     async unsubscribe(event: string | Array<string>)
     {
         if (typeof event === "string")
-            event = [ event ]
+            event = [event]
 
         const result = await this.call("rpc.off", event)
 
@@ -300,17 +301,25 @@ export default class CommonClient extends EventEmitter
             this.current_reconnects = 0
         })
 
-        this.socket.addEventListener("message", async ({data: message}) =>
+        this.socket.addEventListener("message", async ({ data: message }) =>
         {
             // if (message instanceof ArrayBuffer)
             //     message = Buffer.from(message).toString()
 
-            if (typeof Blob !== "undefined" && message instanceof Blob)
+            try
             {
-                message = new Uint8Array(await message.arrayBuffer())
+                if (typeof Blob !== "undefined" && message instanceof Blob)
+                {
+                    // message = new Uint8Array(await message.arrayBuffer())
+                    message = message.stream
+                        ? await msgpack.decodeAsync(message.stream())
+                        : msgpack.decode(await message.arrayBuffer())
+                }
+                else
+                {
+                    message = msgpack.decode(message)
+                }
             }
-
-            try { message = msgpack.decode(message) }
 
             catch (error)
             {
@@ -387,7 +396,7 @@ export default class CommonClient extends EventEmitter
 
         this.socket.addEventListener("error", (error) => this.emit("error", error))
 
-        this.socket.addEventListener("close", ({code, reason}) =>
+        this.socket.addEventListener("close", ({ code, reason }) =>
         {
             if (this.ready) // Delay close event until internal state is updated
                 setTimeout(() => this.emit("close", code, reason), 0)
@@ -401,7 +410,7 @@ export default class CommonClient extends EventEmitter
             this.current_reconnects++
 
             if (this.reconnect && ((this.max_reconnects > this.current_reconnects) ||
-                    this.max_reconnects === 0))
+                this.max_reconnects === 0))
                 setTimeout(() => this._connect(address, options), this.reconnect_interval)
         })
     }

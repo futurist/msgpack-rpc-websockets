@@ -90,5 +90,5 @@ class WebSocketBrowserImpl extends EventEmitter
  */
 export default function(address: string, options: IWSClientAdditionalOptions)
 {
-    return new WebSocketBrowserImpl(address, options)
+    return new WebSocketBrowserImpl(address, options, options.protocol)
 }

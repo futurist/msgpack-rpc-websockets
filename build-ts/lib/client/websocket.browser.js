@@ -14,7 +14,7 @@ class WebSocketBrowserImpl extends EventEmitter {
      */
     constructor(address, options, protocols) {
         super();
-        this.socket = new WebSocket(address, protocols);
+        this.socket = new WebSocket(address, protocols || []);
         this.socket.onopen = () => this.emit("open");
         this.socket.onmessage = (event) => this.emit("message", event.data);
         this.socket.onerror = (error) => this.emit("error", error);

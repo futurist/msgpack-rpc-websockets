@@ -23,7 +23,7 @@ class WebSocketBrowserImpl extends EventEmitter
     {
         super()
 
-        this.socket = new WebSocket(address, protocols)
+        this.socket = new WebSocket(address, protocols || [])
 
         this.socket.onopen = () => this.emit("open")
         this.socket.onmessage = (event) => this.emit("message", event.data)

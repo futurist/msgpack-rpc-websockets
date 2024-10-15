@@ -27,7 +27,7 @@ export class Client extends CommonClient
                 reconnect_interval,
                 max_reconnects,
                 ...rest_options
-            } as any,
+            },
             generate_request_id
         )
     }

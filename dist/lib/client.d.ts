@@ -43,7 +43,7 @@ export default class CommonClient extends EventEmitter {
      * @param {Function} generate_request_id - custom generation request Id
      * @return {CommonClient}
      */
-    constructor(webSocketFactory: ICommonWebSocketFactory, address?: string | (() => Promise<string>), options?: NodeWebSocket.ClientOptions & IWSClientAdditionalOptions, generate_request_id?: (method: string, params: object | Array<any>) => number);
+    constructor(webSocketFactory: ICommonWebSocketFactory, address?: string | (() => Promise<string>), options?: IWSClientAdditionalOptions & Omit<NodeWebSocket.ClientOptions, 'protocol'>, generate_request_id?: (method: string, params: object | Array<any>) => number);
     /**
      * Connects to a defined server if not connected already.
      * @method

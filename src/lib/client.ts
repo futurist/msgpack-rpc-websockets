@@ -41,7 +41,7 @@ export default class CommonClient extends EventEmitter
     private address: string | (() => Promise<string>);
     private rpc_id: number;
     private queue: IQueue;
-    private options: IWSClientAdditionalOptions & NodeWebSocket.ClientOptions;
+    private options: NodeWebSocket.ClientOptions & IWSClientAdditionalOptions;
     private autoconnect: boolean;
     private ready: boolean;
     private reconnect: boolean;
@@ -64,7 +64,7 @@ export default class CommonClient extends EventEmitter
     constructor(
         webSocketFactory: ICommonWebSocketFactory,
         address: string | (() => Promise<string>) = "ws://localhost:8080",
-        options: IWSClientAdditionalOptions & NodeWebSocket.ClientOptions = {},
+        options: NodeWebSocket.ClientOptions & IWSClientAdditionalOptions = {},
         generate_request_id?: (method: string, params: object | Array<any>) => number
     )
     {
@@ -289,7 +289,7 @@ export default class CommonClient extends EventEmitter
      */
     private async _connect(
         address: string | (() => Promise<string>),
-        options: IWSClientAdditionalOptions & NodeWebSocket.ClientOptions
+        options: NodeWebSocket.ClientOptions & IWSClientAdditionalOptions
     )
     {
         this.socket = await this.webSocketFactory(address, options)

@@ -779,7 +779,7 @@ var WebSocketBrowserImpl = /*#__PURE__*/function (_EventEmitter) {
 
 function _default(address, options) {
   return (typeof address === "function" ? address() : Promise.resolve(address)).then(function (address) {
-    return new WebSocketBrowserImpl(address, options, options.protocol);
+    return new WebSocketBrowserImpl(address, options, typeof options.protocol === "function" ? options.protocol() : options.protocol);
   });
 }
 },{"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":7,"@babel/runtime/helpers/getPrototypeOf":8,"@babel/runtime/helpers/inherits":9,"@babel/runtime/helpers/interopRequireDefault":10,"@babel/runtime/helpers/possibleConstructorReturn":12,"eventemitter3":32}],4:[function(require,module,exports){

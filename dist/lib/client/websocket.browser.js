@@ -127,6 +127,6 @@ var WebSocketBrowserImpl = /*#__PURE__*/function (_EventEmitter) {
 
 function _default(address, options) {
   return (typeof address === "function" ? address() : Promise.resolve(address)).then(function (address) {
-    return new WebSocketBrowserImpl(address, options, options.protocol);
+    return new WebSocketBrowserImpl(address, options, typeof options.protocol === "function" ? options.protocol() : options.protocol);
   });
 }

@@ -1,6 +1,6 @@
 {
   "name": "msgpack-rpc-websocket-fork",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "MSGPACK implementation over WebSockets for Node.js",
   "main": "./dist/index.js",
   "scripts": {

@@ -5,11 +5,12 @@ export type NodeWebSocketType = InstanceType<typeof NodeWebSocket>;
 export type NodeWebSocketTypeOptions = NodeWebSocket.ClientOptions;
 
 export interface IWSClientAdditionalOptions {
-    protocol?: string | (() => string),
+    protocol?: string,
     autoconnect?: boolean;
     reconnect?: boolean;
     reconnect_interval?: number;
     max_reconnects?: number;
+    dynamic_options?: ()=>any;
 }
 
 export interface ICommonWebSocketFactory {

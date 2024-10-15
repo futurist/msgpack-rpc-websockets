@@ -9,5 +9,6 @@ import WebSocket from "ws";
  * @return {Undefined}
  */
 export default function (address, options) {
-    return new WebSocket(address, options);
+    return (typeof address === "function" ? address() : Promise.resolve(address))
+        .then((address) => new WebSocket(address, options));
 }

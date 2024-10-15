@@ -18,5 +18,7 @@ var _ws = _interopRequireDefault(require("ws"));
  * @return {Undefined}
  */
 function _default(address, options) {
-  return new _ws["default"](address, options);
+  return (typeof address === "function" ? address() : Promise.resolve(address)).then(function (address) {
+    return new _ws["default"](address, options);
+  });
 }

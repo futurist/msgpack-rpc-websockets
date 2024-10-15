@@ -34,7 +34,7 @@ var WebSocketBrowserImpl = /*#__PURE__*/function (_EventEmitter) {
 
   /** Instantiate a WebSocket class
    * @constructor
-   * @param {String} address - url to a websocket server
+   * @param {any} address - url to a websocket server
    * @param {(Object)} options - websocket options
    * @param {(String|Array)} protocols - a list of protocols
    * @return {WebSocketBrowserImpl} - returns a WebSocket instance
@@ -44,37 +44,45 @@ var WebSocketBrowserImpl = /*#__PURE__*/function (_EventEmitter) {
 
     (0, _classCallCheck2["default"])(this, WebSocketBrowserImpl);
     _this = _super.call(this);
-    _this.socket = new WebSocket(address, protocols || []);
 
-    _this.socket.onopen = function () {
-      return _this.emit("open");
-    };
-
-    _this.socket.onmessage = function (event) {
-      return _this.emit("message", event.data);
-    };
-
-    _this.socket.onerror = function (error) {
-      return _this.emit("error", error);
-    };
-
-    _this.socket.onclose = function (event) {
-      _this.emit("close", event.code, event.reason);
-    };
+    _this.createSocket(address, protocols);
 
     return _this;
   }
-  /**
-   * Sends data through a websocket connection
-   * @method
-   * @param {(String|Object)} data - data to be sent via websocket
-   * @param {Object} optionsOrCallback - ws options
-   * @param {Function} callback - a callback called once the data is sent
-   * @return {Undefined}
-   */
-
 
   (0, _createClass2["default"])(WebSocketBrowserImpl, [{
+    key: "createSocket",
+    value: function createSocket(address, protocols) {
+      var _this2 = this;
+
+      this.socket = new WebSocket(address, protocols || []);
+
+      this.socket.onopen = function () {
+        return _this2.emit("open");
+      };
+
+      this.socket.onmessage = function (event) {
+        return _this2.emit("message", event.data);
+      };
+
+      this.socket.onerror = function (error) {
+        return _this2.emit("error", error);
+      };
+
+      this.socket.onclose = function (event) {
+        _this2.emit("close", event.code, event.reason);
+      };
+    }
+    /**
+     * Sends data through a websocket connection
+     * @method
+     * @param {(String|Object)} data - data to be sent via websocket
+     * @param {Object} optionsOrCallback - ws options
+     * @param {Function} callback - a callback called once the data is sent
+     * @return {Undefined}
+     */
+
+  }, {
     key: "send",
     value: function send(data, optionsOrCallback, callback) {
       var cb = callback || optionsOrCallback;
@@ -118,5 +126,7 @@ var WebSocketBrowserImpl = /*#__PURE__*/function (_EventEmitter) {
 
 
 function _default(address, options) {
-  return new WebSocketBrowserImpl(address, options, options.protocol);
+  return (typeof address === "function" ? address() : Promise.resolve(address)).then(function (address) {
+    return new WebSocketBrowserImpl(address, options, options.protocol);
+  });
 }

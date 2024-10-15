@@ -7,4 +7,4 @@ import { IWSClientAdditionalOptions } from "./client.types";
  * @param {(Object)} options - websocket options
  * @return {Undefined}
  */
-export default function (address: string, options: IWSClientAdditionalOptions & WebSocket.ClientOptions): WebSocket;
+export default function (address: string | (() => Promise<string>), options: IWSClientAdditionalOptions & WebSocket.ClientOptions): Promise<WebSocket>;

@@ -14,15 +14,23 @@ class WebSocketBrowserImpl extends EventEmitter
 
     /** Instantiate a WebSocket class
      * @constructor
-     * @param {String} address - url to a websocket server
+     * @param {any} address - url to a websocket server
      * @param {(Object)} options - websocket options
      * @param {(String|Array)} protocols - a list of protocols
      * @return {WebSocketBrowserImpl} - returns a WebSocket instance
      */
-    constructor(address: string, options: {}, protocols?: string | string[])
+    constructor(
+        address: string,
+        options: {},
+        protocols?: string | string[]
+    )
     {
         super()
+        this.createSocket(address, protocols)
+    }
 
+    createSocket(address: string, protocols: string | string[])
+    {
         this.socket = new WebSocket(address, protocols || [])
 
         this.socket.onopen = () => this.emit("open")
@@ -88,7 +96,11 @@ class WebSocketBrowserImpl extends EventEmitter
  * @param {(Object)} options - websocket options
  * @return {Undefined}
  */
-export default function(address: string, options: IWSClientAdditionalOptions)
+export default function(
+    address: string | (() => Promise<string>),
+    options: IWSClientAdditionalOptions
+)
 {
-    return new WebSocketBrowserImpl(address, options, options.protocol)
+    return (typeof address === "function" ? address() : Promise.resolve(address))
+        .then((address) => new WebSocketBrowserImpl(address, options, options.protocol))
 }

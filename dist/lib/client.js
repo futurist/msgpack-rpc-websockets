@@ -381,171 +381,194 @@ var CommonClient = /*#__PURE__*/function (_EventEmitter) {
 
   }, {
     key: "_connect",
-    value: function _connect(address, options) {
-      var _this4 = this;
+    value: function () {
+      var _connect2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6(address, options) {
+        var _this4 = this;
 
-      this.socket = this.webSocketFactory(address, options);
-      this.socket.addEventListener("open", function () {
-        _this4.ready = true;
+        return _regenerator["default"].wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.next = 2;
+                return this.webSocketFactory(address, options);
 
-        _this4.emit("open");
+              case 2:
+                this.socket = _context6.sent;
+                this.socket.addEventListener("open", function () {
+                  _this4.ready = true;
 
-        _this4.current_reconnects = 0;
-      });
-      this.socket.addEventListener("message", /*#__PURE__*/function () {
-        var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(_ref) {
-          var message, args, i, result;
-          return _regenerator["default"].wrap(function _callee5$(_context5) {
-            while (1) {
-              switch (_context5.prev = _context5.next) {
-                case 0:
-                  message = _ref.data;
-                  _context5.prev = 1;
+                  _this4.emit("open");
 
-                  if (!(typeof Blob !== "undefined" && message instanceof Blob)) {
-                    _context5.next = 17;
-                    break;
-                  }
+                  _this4.current_reconnects = 0;
+                });
+                this.socket.addEventListener("message", /*#__PURE__*/function () {
+                  var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(_ref) {
+                    var message, args, i, result;
+                    return _regenerator["default"].wrap(function _callee5$(_context5) {
+                      while (1) {
+                        switch (_context5.prev = _context5.next) {
+                          case 0:
+                            message = _ref.data;
+                            _context5.prev = 1;
 
-                  if (!message.stream) {
-                    _context5.next = 9;
-                    break;
-                  }
+                            if (!(typeof Blob !== "undefined" && message instanceof Blob)) {
+                              _context5.next = 17;
+                              break;
+                            }
 
-                  _context5.next = 6;
-                  return msgpack.decodeAsync(message.stream());
+                            if (!message.stream) {
+                              _context5.next = 9;
+                              break;
+                            }
 
-                case 6:
-                  _context5.t0 = _context5.sent;
-                  _context5.next = 14;
-                  break;
+                            _context5.next = 6;
+                            return msgpack.decodeAsync(message.stream());
 
-                case 9:
-                  _context5.t1 = msgpack;
-                  _context5.next = 12;
-                  return message.arrayBuffer();
+                          case 6:
+                            _context5.t0 = _context5.sent;
+                            _context5.next = 14;
+                            break;
 
-                case 12:
-                  _context5.t2 = _context5.sent;
-                  _context5.t0 = _context5.t1.decode.call(_context5.t1, _context5.t2);
+                          case 9:
+                            _context5.t1 = msgpack;
+                            _context5.next = 12;
+                            return message.arrayBuffer();
 
-                case 14:
-                  message = _context5.t0;
-                  _context5.next = 18;
-                  break;
+                          case 12:
+                            _context5.t2 = _context5.sent;
+                            _context5.t0 = _context5.t1.decode.call(_context5.t1, _context5.t2);
 
-                case 17:
-                  message = msgpack.decode(message);
+                          case 14:
+                            message = _context5.t0;
+                            _context5.next = 18;
+                            break;
 
-                case 18:
-                  _context5.next = 24;
-                  break;
+                          case 17:
+                            message = msgpack.decode(message);
 
-                case 20:
-                  _context5.prev = 20;
-                  _context5.t3 = _context5["catch"](1);
-                  console.log("decode error:", _context5.t3);
-                  return _context5.abrupt("return");
+                          case 18:
+                            _context5.next = 24;
+                            break;
 
-                case 24:
-                  if (!(message.notification && _this4.listeners(message.notification).length)) {
-                    _context5.next = 30;
-                    break;
-                  }
+                          case 20:
+                            _context5.prev = 20;
+                            _context5.t3 = _context5["catch"](1);
+                            console.log("decode error:", _context5.t3);
+                            return _context5.abrupt("return");
 
-                  if (Object.keys(message.params).length) {
-                    _context5.next = 27;
-                    break;
-                  }
+                          case 24:
+                            if (!(message.notification && _this4.listeners(message.notification).length)) {
+                              _context5.next = 30;
+                              break;
+                            }
 
-                  return _context5.abrupt("return", _this4.emit(message.notification));
+                            if (Object.keys(message.params).length) {
+                              _context5.next = 27;
+                              break;
+                            }
 
-                case 27:
-                  args = [message.notification];
-                  if (message.params.constructor === Object) args.push(message.params);else // using for-loop instead of unshift/spread because performance is better
-                    for (i = 0; i < message.params.length; i++) {
-                      args.push(message.params[i]);
-                    } // run as microtask so that pending queue messages are resolved first
-                  // eslint-disable-next-line prefer-spread
+                            return _context5.abrupt("return", _this4.emit(message.notification));
 
-                  return _context5.abrupt("return", Promise.resolve().then(function () {
-                    _this4.emit.apply(_this4, args);
+                          case 27:
+                            args = [message.notification];
+                            if (message.params.constructor === Object) args.push(message.params);else // using for-loop instead of unshift/spread because performance is better
+                              for (i = 0; i < message.params.length; i++) {
+                                args.push(message.params[i]);
+                              } // run as microtask so that pending queue messages are resolved first
+                            // eslint-disable-next-line prefer-spread
+
+                            return _context5.abrupt("return", Promise.resolve().then(function () {
+                              _this4.emit.apply(_this4, args);
+                            }));
+
+                          case 30:
+                            if (_this4.queue[message.id]) {
+                              _context5.next = 34;
+                              break;
+                            }
+
+                            if (!(message.method && message.params)) {
+                              _context5.next = 33;
+                              break;
+                            }
+
+                            return _context5.abrupt("return", Promise.resolve().then(function () {
+                              _this4.emit(message.method, message.params);
+                            }));
+
+                          case 33:
+                            return _context5.abrupt("return");
+
+                          case 34:
+                            // reject early since server's response is invalid
+                            if ("error" in message === "result" in message) _this4.queue[message.id].promise[1](new Error("Server response malformed. Response must include either \"result\"" + " or \"error\", but not both."));
+                            if (_this4.queue[message.id].timeout) clearTimeout(_this4.queue[message.id].timeout);
+
+                            if (message.error) {
+                              Object.defineProperty(message.error, "__request_id", {
+                                value: message.id
+                              });
+
+                              _this4.queue[message.id].promise[1](message.error);
+                            } else {
+                              result = message.result;
+
+                              if (result) {
+                                result = Object.defineProperty(Object(result), "__request_id", {
+                                  value: message.id
+                                });
+                              }
+
+                              _this4.queue[message.id].promise[0](result);
+                            }
+
+                            _this4.queue[message.id] = null;
+
+                          case 38:
+                          case "end":
+                            return _context5.stop();
+                        }
+                      }
+                    }, _callee5, null, [[1, 20]]);
                   }));
 
-                case 30:
-                  if (_this4.queue[message.id]) {
-                    _context5.next = 34;
-                    break;
-                  }
+                  return function (_x6) {
+                    return _ref2.apply(this, arguments);
+                  };
+                }());
+                this.socket.addEventListener("error", function (error) {
+                  return _this4.emit("error", error);
+                });
+                this.socket.addEventListener("close", function (_ref3) {
+                  var code = _ref3.code,
+                      reason = _ref3.reason;
+                  if (_this4.ready) // Delay close event until internal state is updated
+                    setTimeout(function () {
+                      return _this4.emit("close", code, reason);
+                    }, 0);
+                  _this4.ready = false;
+                  _this4.socket = undefined;
+                  if (code === 1000) return;
+                  _this4.current_reconnects++;
+                  if (_this4.reconnect && (_this4.max_reconnects > _this4.current_reconnects || _this4.max_reconnects === 0)) setTimeout(function () {
+                    return _this4._connect(address, options);
+                  }, _this4.reconnect_interval);
+                });
 
-                  if (!(message.method && message.params)) {
-                    _context5.next = 33;
-                    break;
-                  }
-
-                  return _context5.abrupt("return", Promise.resolve().then(function () {
-                    _this4.emit(message.method, message.params);
-                  }));
-
-                case 33:
-                  return _context5.abrupt("return");
-
-                case 34:
-                  // reject early since server's response is invalid
-                  if ("error" in message === "result" in message) _this4.queue[message.id].promise[1](new Error("Server response malformed. Response must include either \"result\"" + " or \"error\", but not both."));
-                  if (_this4.queue[message.id].timeout) clearTimeout(_this4.queue[message.id].timeout);
-
-                  if (message.error) {
-                    Object.defineProperty(message.error, "__request_id", {
-                      value: message.id
-                    });
-
-                    _this4.queue[message.id].promise[1](message.error);
-                  } else {
-                    result = message.result;
-
-                    if (result) {
-                      result = Object.defineProperty(Object(result), "__request_id", {
-                        value: message.id
-                      });
-                    }
-
-                    _this4.queue[message.id].promise[0](result);
-                  }
-
-                  _this4.queue[message.id] = null;
-
-                case 38:
-                case "end":
-                  return _context5.stop();
-              }
+              case 7:
+              case "end":
+                return _context6.stop();
             }
-          }, _callee5, null, [[1, 20]]);
-        }));
+          }
+        }, _callee6, this);
+      }));
 
-        return function (_x4) {
-          return _ref2.apply(this, arguments);
-        };
-      }());
-      this.socket.addEventListener("error", function (error) {
-        return _this4.emit("error", error);
-      });
-      this.socket.addEventListener("close", function (_ref3) {
-        var code = _ref3.code,
-            reason = _ref3.reason;
-        if (_this4.ready) // Delay close event until internal state is updated
-          setTimeout(function () {
-            return _this4.emit("close", code, reason);
-          }, 0);
-        _this4.ready = false;
-        _this4.socket = undefined;
-        if (code === 1000) return;
-        _this4.current_reconnects++;
-        if (_this4.reconnect && (_this4.max_reconnects > _this4.current_reconnects || _this4.max_reconnects === 0)) setTimeout(function () {
-          return _this4._connect(address, options);
-        }, _this4.reconnect_interval);
-      });
-    }
+      function _connect(_x4, _x5) {
+        return _connect2.apply(this, arguments);
+      }
+
+      return _connect;
+    }()
   }]);
   return CommonClient;
 }(_eventemitter.EventEmitter);

@@ -7,7 +7,7 @@ import { IWSClientAdditionalOptions } from "./lib/client/client.types"
 export class Client extends CommonClient
 {
     constructor(
-        address = "ws://localhost:8080",
+        address: string | (() => Promise<string>) = "ws://localhost:8080",
         {
             autoconnect = true,
             reconnect = true,

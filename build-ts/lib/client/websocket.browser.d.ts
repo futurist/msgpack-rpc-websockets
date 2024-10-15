@@ -8,12 +8,13 @@ declare class WebSocketBrowserImpl extends EventEmitter {
     socket: BrowserWebSocketType;
     /** Instantiate a WebSocket class
      * @constructor
-     * @param {String} address - url to a websocket server
+     * @param {any} address - url to a websocket server
      * @param {(Object)} options - websocket options
      * @param {(String|Array)} protocols - a list of protocols
      * @return {WebSocketBrowserImpl} - returns a WebSocket instance
      */
     constructor(address: string, options: {}, protocols?: string | string[]);
+    createSocket(address: string, protocols: string | string[]): void;
     /**
      * Sends data through a websocket connection
      * @method
@@ -41,5 +42,5 @@ declare class WebSocketBrowserImpl extends EventEmitter {
  * @param {(Object)} options - websocket options
  * @return {Undefined}
  */
-export default function (address: string, options: IWSClientAdditionalOptions): WebSocketBrowserImpl;
+export default function (address: string | (() => Promise<string>), options: IWSClientAdditionalOptions): Promise<WebSocketBrowserImpl>;
 export {};

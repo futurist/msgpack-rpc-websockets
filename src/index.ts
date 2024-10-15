@@ -7,7 +7,7 @@ import { NodeWebSocketTypeOptions, IWSClientAdditionalOptions } from "./lib/clie
 export class Client extends CommonClient
 {
     constructor(
-        address = "ws://localhost:8080",
+        address: string | (() => Promise<string>) = "ws://localhost:8080",
         {
             autoconnect = true,
             reconnect = true,

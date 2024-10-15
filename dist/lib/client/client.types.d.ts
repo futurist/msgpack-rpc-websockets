@@ -10,7 +10,7 @@ export interface IWSClientAdditionalOptions {
     max_reconnects?: number;
 }
 export interface ICommonWebSocketFactory {
-    (address: string, options: IWSClientAdditionalOptions): ICommonWebSocket;
+    (address: string | (() => Promise<string>), options: IWSClientAdditionalOptions): Promise<ICommonWebSocket>;
 }
 export interface ICommonWebSocket {
     send: (data: Parameters<BrowserWebSocketType["send"]>[0], optionsOrCallback: ((error?: Error) => void) | Parameters<NodeWebSocketType["send"]>[1], callback?: (error?: Error) => void) => void;

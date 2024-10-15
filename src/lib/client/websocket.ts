@@ -13,9 +13,10 @@ import { IWSClientAdditionalOptions } from "./client.types"
  * @return {Undefined}
  */
 export default function(
-    address: string,
+    address: string | (()=>Promise<string>),
     options: IWSClientAdditionalOptions & WebSocket.ClientOptions
 )
 {
-    return new WebSocket(address, options)
+    return (typeof address === "function" ? address() : Promise.resolve(address))
+        .then((address) => new WebSocket(address, options))
 }

@@ -7,13 +7,16 @@ import { EventEmitter } from "eventemitter3";
 class WebSocketBrowserImpl extends EventEmitter {
     /** Instantiate a WebSocket class
      * @constructor
-     * @param {String} address - url to a websocket server
+     * @param {any} address - url to a websocket server
      * @param {(Object)} options - websocket options
      * @param {(String|Array)} protocols - a list of protocols
      * @return {WebSocketBrowserImpl} - returns a WebSocket instance
      */
     constructor(address, options, protocols) {
         super();
+        this.createSocket(address, protocols);
+    }
+    createSocket(address, protocols) {
         this.socket = new WebSocket(address, protocols || []);
         this.socket.onopen = () => this.emit("open");
         this.socket.onmessage = (event) => this.emit("message", event.data);
@@ -63,5 +66,6 @@ class WebSocketBrowserImpl extends EventEmitter {
  * @return {Undefined}
  */
 export default function (address, options) {
-    return new WebSocketBrowserImpl(address, options, options.protocol);
+    return (typeof address === "function" ? address() : Promise.resolve(address))
+        .then((address) => new WebSocketBrowserImpl(address, options, options.protocol));
 }

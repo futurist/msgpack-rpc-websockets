@@ -177,8 +177,8 @@ export default class CommonClient extends EventEmitter {
      * @param {Object} options - ws options object
      * @return {Undefined}
      */
-    _connect(address, options) {
-        this.socket = this.webSocketFactory(address, options);
+    async _connect(address, options) {
+        this.socket = await this.webSocketFactory(address, options);
         this.socket.addEventListener("open", () => {
             this.ready = true;
             this.emit("open");

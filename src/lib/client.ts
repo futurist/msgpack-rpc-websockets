@@ -38,7 +38,7 @@ export interface IWSRequestParams {
 
 export default class CommonClient extends EventEmitter
 {
-    private address: string;
+    private address: string | (() => Promise<string>);
     private rpc_id: number;
     private queue: IQueue;
     private options: IWSClientAdditionalOptions & NodeWebSocket.ClientOptions;
@@ -63,7 +63,7 @@ export default class CommonClient extends EventEmitter
      */
     constructor(
         webSocketFactory: ICommonWebSocketFactory,
-        address = "ws://localhost:8080",
+        address: string | (() => Promise<string>) = "ws://localhost:8080",
         options: IWSClientAdditionalOptions & NodeWebSocket.ClientOptions = {},
         generate_request_id?: (method: string, params: object | Array<any>) => number
     )
@@ -287,12 +287,12 @@ export default class CommonClient extends EventEmitter
      * @param {Object} options - ws options object
      * @return {Undefined}
      */
-    private _connect(
-        address: string,
+    private async _connect(
+        address: string | (() => Promise<string>),
         options: IWSClientAdditionalOptions & NodeWebSocket.ClientOptions
     )
     {
-        this.socket = this.webSocketFactory(address, options)
+        this.socket = await this.webSocketFactory(address, options)
 
         this.socket.addEventListener("open", () =>
         {
